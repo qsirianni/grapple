@@ -16,22 +16,22 @@ import sys
 def check_env():
     """Check the execution environment to ensure all necessary utilities are installed"""
 
-    required_utils = ['bamtofastq', 'fiona', 'bowtie2', 'samtools', 'bcftools', 'vcfutils.pl', 'fastq_to_fasta']
+    required_utils = ['bowtie2', 'samtools', 'bcftools', 'vcfutils.pl']
 
     print 'Ensuring that all necessary utilities are installed...'
 
-    with open(os.devnull, 'w') as null:
+    with open(os.devnull, 'w') as null_file:
         for util in required_utils:
             # POSIX environment
             if os.name == 'posix':
-                if subprocess.call(['which', util], stdout=null) == 0:
+                if subprocess.call(['which', util], stdout=null_file) == 0:
                     print util, 'found'
                 else:
                     raise OSError('{} was not found. Ensure it is installed and in your PATH'.format(util))
 
             # Windows environment
             elif os.name == 'nt':
-                if subprocess.call(['where', '/Q','{}.exe'.format(util)], stdout=null) == 0:
+                if subprocess.call(['where', '/Q','{}.exe'.format(util)], stdout=null_file) == 0:
                     print util, 'found'
                 else:
                     raise OSError('{} was not found. Ensure it is installed and in your PATH'.format(util))
@@ -41,7 +41,7 @@ def check_env():
                 raise OSError('This script cannot run in the current environment. Try using a POSIX or Windows NT '
                               'environment instead')
 
-    print 'All necessary utilities have been found'
+    print 'All necessary utilities have been found. You are ready to assemble'
 
 
 def get_args():
@@ -73,13 +73,11 @@ def get_args():
     return vars(parser.parse_args())
 
 
-def main():
-    """Process NGS reads into a reference assembly"""
-
+if __name__ == '__main__':
     # Get user args
     args = get_args()
 
-    #The user wishes to test the environment the script is executing in
+    # The user wishes to test the environment the script is executing in
     if args['env']:
         try:
             check_env()
@@ -87,10 +85,9 @@ def main():
             print e.message
             sys.exit(1)
 
-
-# Execute this script
-if __name__ == '__main__':
-    main()
+    # Convert the input BAM file into FASTQ if the user provided a REF_GENOME
+    if args['REF_GENOME'] is not None:
+        pass
 
 
 
