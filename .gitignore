@@ -1,2 +1,5 @@
+# OS X ignored files
 .DS_Store
+
+# PyCharm ignored files
 .idea/*

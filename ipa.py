@@ -5,6 +5,7 @@ Script designed to pipeline a collection of NGS reads through various utilities 
 reference assembly in FASTA format.
 
 Author: Quinton Sirianni
+Version: 0.1
 """
 
 import argparse
@@ -16,30 +17,22 @@ import sys
 def check_env():
     """Check the execution environment to ensure all necessary utilities are installed"""
 
-    required_utils = ['bowtie2', 'samtools', 'bcftools', 'vcfutils.pl']
+    required_utils = ['karect', 'bowtie2', 'samtools', 'bcftools']
 
     print 'Ensuring that all necessary utilities are installed...'
 
-    with open(os.devnull, 'w') as null_file:
+    with open(os.devnull, 'w') as null_out:
         for util in required_utils:
             # POSIX environment
             if os.name == 'posix':
-                if subprocess.call(['which', util], stdout=null_file) == 0:
-                    print util, 'found'
-                else:
-                    raise OSError('{} was not found. Ensure it is installed and in your PATH'.format(util))
-
-            # Windows environment
-            elif os.name == 'nt':
-                if subprocess.call(['where', '/Q','{}.exe'.format(util)], stdout=null_file) == 0:
+                if subprocess.call(['which', util], stdout=null_out) == 0:
                     print util, 'found'
                 else:
                     raise OSError('{} was not found. Ensure it is installed and in your PATH'.format(util))
 
             # Unsupported environments
             else:
-                raise OSError('This script cannot run in the current environment. Try using a POSIX or Windows NT '
-                              'environment instead')
+                raise OSError('This script is designed to execute in a POSIX environment only')
 
     print 'All necessary utilities have been found. You are ready to assemble'
 
@@ -49,8 +42,8 @@ def get_args():
 
     # Setup a parser object for user args
     parser = argparse.ArgumentParser(description='IonTorrent Pipeline Assembler', epilog='Use to understand why '
-                                                                                         'S.cerevisae makes beer '
-                                                                                         'taste so good!')
+                                                                                         'yeast makes beer taste so '
+                                                                                         'good!')
 
     parser.add_argument('-e', '--env', action='store_true', help='Checks the execution environment for the '
                                                                  'necessary utilites before executing the '
@@ -73,7 +66,7 @@ def get_args():
     return vars(parser.parse_args())
 
 
-if __name__ == '__main__':
+def main():
     # Get user args
     args = get_args()
 
@@ -88,6 +81,10 @@ if __name__ == '__main__':
     # Convert the input BAM file into FASTQ if the user provided a REF_GENOME
     if args['REF_GENOME'] is not None:
         pass
+
+
+if __name__ == '__main__':
+    main()
 
 
 
