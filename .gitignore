@@ -3,3 +3,6 @@
 
 # PyCharm ignored files
 .idea/*
+
+# Virtual environment ignored files
+venv/*
