@@ -21,7 +21,7 @@ import psutil
 def check_env():
     """Check the execution environment to ensure all necessary utilities are installed."""
 
-    required_utils = ['karect', 'bowtie2', 'samtools', 'bcftools']
+    required_utils = ['karect', 'bowtie2', 'bowtie2-build', 'samtools', 'bcftools']
 
     print('Ensuring that all necessary utilities are installed...')
 
@@ -32,7 +32,7 @@ def check_env():
                 if subprocess.call(['which', util], stdout=null_handle) == 0:
                     print(util, 'found')
                 else:
-                    raise OSError('{} was not found. Ensure it is installed and in your PATH'.format(util))
+                    raise OSError(util + 'was not found. Ensure it is installed and in your PATH')
             # Unsupported environments
             else:
                 raise OSError('This script is designed to execute in a POSIX environment only')
@@ -75,10 +75,12 @@ def bam_to_fq(read_file):
     print('Converting input from BAM format into FASTQ...')
 
     # Create a temporary output file to place the FASTQ output in
-    ofile = '{}/bam_to_fq_out_IPA.fq'.format(tempfile.gettempdir())
+    ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out_IPA.fq')
 
     with open(ofile, 'w') as ofile_handle:
         subprocess.call(['samtools', 'bam2fq', read_file], stdout=ofile_handle)
+
+    print('Read format converted!')
 
     return ofile
 
@@ -97,18 +99,19 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     print('Correcting the reads...')
 
     with open(os.devnull, 'w') as null_handle:
-        subprocess.call(['karect', '-correct', '-inputfile={}'.format(read_file), '-celltype={}'.format(cell_type),
-                         '-matchtype={}'.format(match_type), '-threads={}'.format(thread_number),
-                         '-memory={}'.format(memory_limit), 'resultdir={}'.format(tempfile.gettempdir()),
-                         '-tempdir={}'.format(tempfile.gettempdir())], stdout=null_handle)
+        subprocess.call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
+                         '-matchtype='+ match_type, '-threads=' + thread_number, '-memory=' + memory_limit,
+                         'resultdir=' + tempfile.gettempdir(), '-tempdir=' + tempfile.gettempdir()], stdout=null_handle)
+
+    print('Reads corrected!')
 
     # Return the location of the output file
-    ifile_suffix = read_file.replace(tempfile.gettempdir(), '')
-    ofile = "{}/karect_{}".format(tempfile.gettempdir(), ifile_suffix)
+    ifile_suffix = os.path.split(read_file)[1]
+    ofile = os.path.join(tempfile.gettempdir(), 'karect_' + ifile_suffix)
     return ofile
 
 
-def read_alignment(read_file, ref_genome_file):
+def read_alignment(read_file, ref_genome_file, thread_number):
     """
     Align the reads to thre reference genome using Bowtie2.
 
@@ -116,7 +119,26 @@ def read_alignment(read_file, ref_genome_file):
     ref_genome_file - file containing the reference genome in FASTA format
     """
 
-    # Create an index file from the reference genome
+    print('Creating an index of the reference genome...')
+
+    index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index_IPA')
+    ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads_IPA.sam')
+
+    with open(os.devnull, 'w') as null_handle:
+        # Create an index file from the reference genome
+        subprocess.call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle)
+
+    print('Reference genome indexed!')
+
+    print('Aligning the reads against the reference...')
+
+    with open(ofile, 'w') as ofile_handle:
+        # Align the reads
+        subprocess.call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file], stdout=ofile_handle)
+
+    print('Reads aligned!')
+
+    return ofile
 
 
 def main():
@@ -134,12 +156,15 @@ def main():
             sys.exit(1)
     # Start the pipeline if the user provided a reference genome
     elif args['ref']:
+        # Get system information
+        available_threads = psutil.cpu_count()
+        available_memory = psutil.virtual_memory().total / 1000000000 / 2
+
         # Determine if the user has provided an input file or wishes to use stdin
         if args['input']:
             ifile = args['input']
         else:
-            ifile = '{}/stdin_dump_IPA.bam'.format(tempfile.gettempdir())
-
+            ifile = os.path.join(tempfile.gettempdir(), 'stdin_dump_IPA.bam')
             with open(ifile, 'wb') as ifile_handle:
                 for line in sys.stdin:
                     ifile_handle.write(line)
@@ -149,14 +174,12 @@ def main():
 
             # Correct the reads if error correction has not been disabled
             if not args['disable_ec']:
-                available_threads = psutil.cpu_count()
-                available_memory = psutil.virtual_memory().total / 1000000000 / 2
                 corrected_reads = read_correction(raw_reads, available_threads, available_memory)
             else:
                 corrected_reads = raw_reads
 
             # Align the reads
-            #aligned_reads = read_alignment(corrected_reads, args['REF_GENOME'][0])
+            aligned_reads = read_alignment(corrected_reads, args['ref'], available_threads)
 
             # Sort and index the aligned reads
             #sorted_reads = sort_and_index(aligned_reads)
