@@ -9,7 +9,6 @@ Author: Quinton Sirianni
 
 from __future__ import print_function
 
-import argparse
 import os
 import subprocess
 import sys
@@ -40,31 +39,6 @@ def check_env():
     print('All necessary utilities have been found. You are ready to assemble')
 
 
-def get_args():
-    """Return the arguments passed by the user to the script at runtime."""
-
-    # Setup a parser object for user args
-    parser = argparse.ArgumentParser(description='IonTorrent Pipeline Assembler')
-
-    parser.add_argument('-d', '--disable_ec', action='store_true', help='Disable error correction')
-
-    parser.add_argument('-e', '--env', action='store_true', help='Check the execution environment for the '
-                                                                 'necessary utilites. If this option is selected, all '
-                                                                 'other options are ignored and the main pipeline will '
-                                                                 'not be executed')
-
-    parser.add_argument('-i', '--input', help='Specify an input file of NGS reads in BAM format. If flag not present, '
-                                              'stdin is used instead')
-
-    parser.add_argument('-o', '--output', help='Specify an output file for the resulting genome in FASTA format. If '
-                                               'flag not present, stdout is used instead')
-
-    parser.add_argument('-r', '--ref', help='The reference genome used to align the read in FASTA format.')
-
-    # Retrieve the arguments and return them as a dictionary
-    return vars(parser.parse_args())
-
-
 def bam_to_fq(read_file):
     """
     Convert the input file from BAM to FASTQ using SAMtools.
@@ -72,15 +46,11 @@ def bam_to_fq(read_file):
     bam_file = file containing the NGS reads in BAM format
     """
 
-    print('Converting input from BAM format into FASTQ...')
-
     # Create a temporary output file to place the FASTQ output in
     ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out_IPA.fq')
 
     with open(ofile, 'w') as ofile_handle:
         subprocess.call(['samtools', 'bam2fq', read_file], stdout=ofile_handle)
-
-    print('Read format converted!')
 
     return ofile
 
@@ -96,14 +66,10 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     match_type = the correction mode to be used
     """
 
-    print('Correcting the reads...')
-
     with open(os.devnull, 'w') as null_handle:
         subprocess.call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
                          '-matchtype='+ match_type, '-threads=' + thread_number, '-memory=' + memory_limit,
                          'resultdir=' + tempfile.gettempdir(), '-tempdir=' + tempfile.gettempdir()], stdout=null_handle)
-
-    print('Reads corrected!')
 
     # Return the location of the output file
     ifile_suffix = os.path.split(read_file)[1]
@@ -117,9 +83,8 @@ def read_alignment(read_file, ref_genome_file, thread_number):
 
     read_file - file containing the NGS reads to align in FASTQ format
     ref_genome_file - file containing the reference genome in FASTA format
+    thread_number - number of threads to use during alignment
     """
-
-    print('Creating an index of the reference genome...')
 
     index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index_IPA')
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads_IPA.sam')
@@ -128,24 +93,15 @@ def read_alignment(read_file, ref_genome_file, thread_number):
         # Create an index file from the reference genome
         subprocess.call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle)
 
-    print('Reference genome indexed!')
-
-    print('Aligning the reads against the reference...')
-
     with open(ofile, 'w') as ofile_handle:
         # Align the reads
         subprocess.call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file], stdout=ofile_handle)
 
-    print('Reads aligned!')
-
     return ofile
 
 
-def main():
+def main(args):
     """Executes the pipeline according to the user's arguments."""
-
-    # Get user args
-    args = get_args()
 
     # The user wishes to test the environment the script is executing in
     if args['env']:
@@ -197,11 +153,35 @@ def main():
             print(e.message, file=sys.stderr)
             sys.exit(1)
     else:
-        print('A reference genome was not provided so the pipeline cannot execute')
+        print('A reference genome was not provided so the pipeline cannot execute', file=sys.stderr)
+        sys.exit(1)
 
 
+# Acquire arguments from the user and pass them to main function if this script is executed
 if __name__ == '__main__':
-    main()
+    import argparse
+
+    # Setup a parser object for user args
+    parser = argparse.ArgumentParser(description='IonTorrent Pipeline Assembler')
+
+    parser.add_argument('-d', '--disable_ec', action='store_true', help='Disable error correction')
+
+    parser.add_argument('-e', '--env', action='store_true', help='Check the execution environment for the '
+                                                                 'necessary utilites. If this option is selected, all '
+                                                                 'other options are ignored and the main pipeline will '
+                                                                 'not be executed')
+
+    parser.add_argument('-i', '--input', help='Specify an input file of NGS reads in BAM format. If flag not present, '
+                                              'stdin is used instead')
+
+    parser.add_argument('-o', '--output', help='Specify an output file for the resulting genome in FASTA format. If '
+                                               'flag not present, stdout is used instead')
+
+    parser.add_argument('-r', '--ref', help='The reference genome used to align the read in FASTA format.')
+
+    # Retrieve the arguments and pass them to the main function
+    main(vars(parser.parse_args()))
+
 
 
 
