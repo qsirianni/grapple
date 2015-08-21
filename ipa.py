@@ -22,21 +22,21 @@ def check_env():
 
     required_utils = ['karect', 'bowtie2', 'bowtie2-build', 'samtools', 'bcftools']
 
-    print('Ensuring that all necessary utilities are installed...')
+    print('Ensuring that all necessary utilities are installed...', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
         for util in required_utils:
             # POSIX environment
             if os.name == 'posix':
                 if subprocess.call(['which', util], stdout=null_handle) == 0:
-                    print(util, 'found')
+                    print(util, 'found', file=sys.stderr)
                 else:
-                    raise OSError(util + 'was not found. Ensure it is installed and in your PATH')
+                    raise OSError(util + 'was not found. Ensure it is installed and in your PATH', file=sys.stderr)
             # Unsupported environments
             else:
                 raise OSError('This script is designed to execute in a POSIX environment only')
 
-    print('All necessary utilities have been found. You are ready to assemble')
+    print('All necessary utilities have been found. You are ready to assemble', file=sys.stderr)
 
 
 def bam_to_fq(read_file):
