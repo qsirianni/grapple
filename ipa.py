@@ -10,9 +10,11 @@ Author: Quinton Sirianni
 from __future__ import print_function
 
 import os
+import os.path
 import subprocess
 import sys
 import tempfile
+from subprocess import CalledProcessError
 
 import psutil
 
@@ -28,13 +30,17 @@ def check_env():
         for util in required_utils:
             # POSIX environment
             if os.name == 'posix':
-                if subprocess.call(['which', util], stdout=null_handle) == 0:
+                return_code = subprocess.call(['which', util], stdout=null_handle)
+
+                # Ensure the subprocess executed correctly
+                if return_code == 0:
                     print(util, 'found', file=sys.stderr)
                 else:
-                    raise OSError(util + 'was not found. Ensure it is installed and in your PATH', file=sys.stderr)
+                    raise CalledProcessError(util + 'was not found. Ensure it is installed and in your PATH')
+
             # Unsupported environments
             else:
-                raise OSError('This script is designed to execute in a POSIX environment only')
+                raise CalledProcessError('This script is designed to execute in a POSIX environment only')
 
     print('All necessary utilities have been found. You are ready to assemble', file=sys.stderr)
 
@@ -52,7 +58,11 @@ def bam_to_fq(read_file):
     print('Converting the input from BAM format to FASTQ format... ', end='', file=sys.stderr)
 
     with open(ofile, 'w') as ofile_handle, open(os.devnull, 'w') as null_handle:
-        subprocess.call(['samtools', 'bam2fq', read_file], stdout=ofile_handle, stderr=null_handle)
+        return_code = subprocess.call(['samtools', 'bam2fq', read_file], stdout=ofile_handle, stderr=null_handle)
+
+        # Ensure the subprocess executed correctly
+        if return_code != 0:
+            raise CalledProcessError('The input could not be converted to FASTQ format')
 
     print('done!', file=sys.stderr)
 
@@ -73,10 +83,14 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     print('Correcting the reads... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
-        subprocess.call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
-                         '-matchtype='+ match_type, '-threads=' + thread_number, '-memory=' + memory_limit,
-                         'resultdir=' + tempfile.gettempdir(), '-tempdir=' + tempfile.gettempdir()],
-                          stdout=null_handle, stderr=null_handle)
+        return_code = subprocess.call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
+                                       '-matchtype='+ match_type, '-threads=' + thread_number, '-memory=' + memory_limit,
+                                       'resultdir=' + tempfile.gettempdir(), '-tempdir=' + tempfile.gettempdir()],
+                                        stdout=null_handle, stderr=null_handle)
+
+        # Ensure the subprocess executed correctly
+        if return_code != 0:
+            raise CalledProcessError('The reads could not be corrected')
 
     print('done!', file=sys.stderr)
 
@@ -102,14 +116,23 @@ def read_alignment(read_file, ref_genome_file, thread_number):
 
     with open(os.devnull, 'w') as null_handle:
         # Create an index file from the reference genome
-        subprocess.call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle, stderr=null_handle)
+        return_code = subprocess.call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle,
+                                        stderr=null_handle)
+
+        # Ensure the subprocess executed successfully
+        if return_code != 0:
+            raise CalledProcessError('An index could not be constructed from the reference genome provided')
 
         with open(ofile, 'w') as ofile_handle:
             # Align the reads
-            subprocess.call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file],
-                            stdout=ofile_handle, stderr=null_handle)
+            return_code = subprocess.call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file],
+                                            stdout=ofile_handle, stderr=null_handle)
 
-    print('done!')
+            # Ensure the subprocess executed successfully
+            if return_code != 0:
+                raise CalledProcessError('The reads could not be aligned to the reference genome')
+
+    print('done!', file=sys.stderr)
 
     return ofile
 
@@ -121,9 +144,10 @@ def main(args):
     if args['env']:
         try:
             check_env()
-        except OSError as e:
+        except CalledProcessError as e:
             print(e.message, file=sys.stderr)
             sys.exit(1)
+
     # Start the pipeline if the user provided a reference genome
     elif args['ref']:
         # Get system information
@@ -133,11 +157,13 @@ def main(args):
         # Determine if the user has provided an input file or wishes to use stdin
         if args['input']:
             ifile = args['input']
+
         else:
             ifile = os.path.join(tempfile.gettempdir(), 'stdin_dump_IPA.bam')
             with open(ifile, 'wb') as ifile_handle:
                 for line in sys.stdin:
                     ifile_handle.write(line)
+
         try:
             # Convert the input file containing the reads from BAM to FASTQ format
             raw_reads = bam_to_fq(ifile)
@@ -145,6 +171,7 @@ def main(args):
             # Correct the reads if error correction has not been disabled
             if not args['disable_ec']:
                 corrected_reads = read_correction(raw_reads, available_threads, available_memory)
+
             else:
                 corrected_reads = raw_reads
 
@@ -162,10 +189,11 @@ def main(args):
 
             # Print the consensus to the output file or stdout
             #print_consensus(consensus)
-        # Temporary "catch all" except clause. Will be fine-tuned as development continues
-        except Exception as e:
+
+        except CalledProcessError as e:
             print(e.message, file=sys.stderr)
             sys.exit(1)
+
     else:
         print('A reference genome was not provided so the pipeline cannot execute', file=sys.stderr)
         sys.exit(1)
