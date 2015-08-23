@@ -49,8 +49,12 @@ def bam_to_fq(read_file):
     # Create a temporary output file to place the FASTQ output in
     ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out_IPA.fq')
 
-    with open(ofile, 'w') as ofile_handle:
-        subprocess.call(['samtools', 'bam2fq', read_file], stdout=ofile_handle)
+    print('Converting the input from BAM format to FASTQ format... ', end='', file=sys.stderr)
+
+    with open(ofile, 'w') as ofile_handle, open(os.devnull, 'w') as null_handle:
+        subprocess.call(['samtools', 'bam2fq', read_file], stdout=ofile_handle, stderr=null_handle)
+
+    print('done!', file=sys.stderr)
 
     return ofile
 
@@ -66,10 +70,15 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     match_type = the correction mode to be used
     """
 
+    print('Correcting the reads... ', end='', file=sys.stderr)
+
     with open(os.devnull, 'w') as null_handle:
         subprocess.call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
                          '-matchtype='+ match_type, '-threads=' + thread_number, '-memory=' + memory_limit,
-                         'resultdir=' + tempfile.gettempdir(), '-tempdir=' + tempfile.gettempdir()], stdout=null_handle)
+                         'resultdir=' + tempfile.gettempdir(), '-tempdir=' + tempfile.gettempdir()],
+                          stdout=null_handle, stderr=null_handle)
+
+    print('done!', file=sys.stderr)
 
     # Return the location of the output file
     ifile_suffix = os.path.split(read_file)[1]
@@ -89,13 +98,18 @@ def read_alignment(read_file, ref_genome_file, thread_number):
     index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index_IPA')
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads_IPA.sam')
 
+    print('Aligning the reads... ', end='', file=sys.stderr)
+
     with open(os.devnull, 'w') as null_handle:
         # Create an index file from the reference genome
-        subprocess.call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle)
+        subprocess.call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle, stderr=null_handle)
 
-    with open(ofile, 'w') as ofile_handle:
-        # Align the reads
-        subprocess.call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file], stdout=ofile_handle)
+        with open(ofile, 'w') as ofile_handle:
+            # Align the reads
+            subprocess.call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file],
+                            stdout=ofile_handle, stderr=null_handle)
+
+    print('done!')
 
     return ofile
 
@@ -181,14 +195,3 @@ if __name__ == '__main__':
 
     # Retrieve the arguments and pass them to the main function
     main(vars(parser.parse_args()))
-
-
-
-
-
-
-
-
-
-
-
