@@ -14,7 +14,6 @@ import os.path
 import subprocess
 import sys
 import tempfile
-from subprocess import CalledProcessError
 
 import psutil
 
@@ -34,13 +33,14 @@ def check_env():
 
                 # Ensure the subprocess executed correctly
                 if return_code == 0:
-                    print(util, 'found', file=sys.stderr)
+                    print('"{}"'.format(util), 'found', file=sys.stderr)
                 else:
-                    raise CalledProcessError(util + 'was not found. Ensure it is installed and in your PATH')
+                    raise OSError('"{}"'.format(util) + 'was not found. Ensure it is installed and in your '
+                                                                   'PATH')
 
             # Unsupported environments
             else:
-                raise CalledProcessError('This script is designed to execute in a POSIX environment only')
+                raise OSError('This script is designed to execute in a POSIX environment only')
 
     print('All necessary utilities have been found. You are ready to assemble', file=sys.stderr)
 
@@ -62,7 +62,7 @@ def bam_to_fq(read_file):
 
         # Ensure the subprocess executed correctly
         if return_code != 0:
-            raise CalledProcessError('The input could not be converted to FASTQ format')
+            raise OSError('The input could not be converted to FASTQ format')
 
     print('done!', file=sys.stderr)
 
@@ -74,23 +74,23 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     Correct the raw reads using Karect.
 
     read_file = file containing the NGS reads in FASTQ format
-    thread_number = the number of threads the subprocess can use
-    memory_limit = the maximum amount of memory the subprocess can use
-    cell_type = the type of cell the reads are from
-    match_type = the correction mode to be used
+    thread_number = number of threads the subprocess can use
+    memory_limit = maximum amount of memory the subprocess can use
+    cell_type = type of cell the reads are from
+    match_type = correction mode to be used
     """
 
     print('Correcting the reads... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
         return_code = subprocess.call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
-                                       '-matchtype='+ match_type, '-threads=' + thread_number, '-memory=' + memory_limit,
-                                       'resultdir=' + tempfile.gettempdir(), '-tempdir=' + tempfile.gettempdir()],
-                                        stdout=null_handle, stderr=null_handle)
+                                       '-matchtype='+ match_type, '-threads=' + thread_number,
+                                       '-memory=' + memory_limit, 'resultdir=' + tempfile.gettempdir(),
+                                       '-tempdir=' + tempfile.gettempdir()], stdout=null_handle, stderr=null_handle)
 
         # Ensure the subprocess executed correctly
         if return_code != 0:
-            raise CalledProcessError('The reads could not be corrected')
+            raise OSError('The reads could not be corrected')
 
     print('done!', file=sys.stderr)
 
@@ -102,7 +102,7 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
 
 def read_alignment(read_file, ref_genome_file, thread_number):
     """
-    Align the reads to thre reference genome using Bowtie2.
+    Align the reads to the reference genome using Bowtie2.
 
     read_file - file containing the NGS reads to align in FASTQ format
     ref_genome_file - file containing the reference genome in FASTA format
@@ -121,7 +121,7 @@ def read_alignment(read_file, ref_genome_file, thread_number):
 
         # Ensure the subprocess executed successfully
         if return_code != 0:
-            raise CalledProcessError('An index could not be constructed from the reference genome provided')
+            raise OSError('An index could not be constructed from the reference genome provided')
 
         with open(ofile, 'w') as ofile_handle:
             # Align the reads
@@ -130,7 +130,40 @@ def read_alignment(read_file, ref_genome_file, thread_number):
 
             # Ensure the subprocess executed successfully
             if return_code != 0:
-                raise CalledProcessError('The reads could not be aligned to the reference genome')
+                raise OSError('The reads could not be aligned to the reference genome')
+
+    print('done!', file=sys.stderr)
+
+    return ofile
+
+
+def sort_and_index(read_file, thread_number):
+    """
+    Sort and index the aligned reads
+
+    read_file - aligned reads in SAM format
+    thread_number - number of threads to use for sorting
+    """
+
+    ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads_IPA.bam')
+
+    print('Sorting and indexing the reads... ', end='', file=sys.stderr)
+
+    with open(os.devnull, 'w') as null_handle:
+        # Sort the read file
+        return_code = subprocess.call(['samtools', 'sort', '-o', ofile, '-@', str(thread_number), '-O', 'bam',
+                                       read_file], stdout=null_handle, stderr=null_handle)
+
+        # Ensure the subprocess executed successfully
+        if return_code != 0:
+            raise OSError('The read file could not be sorted')
+
+        # Index the sorted file
+        return_code = subprocess.call(['samtools', 'index', ofile], stdout=null_handle, stderr=null_handle)
+
+        # Ensure the subprocess executed successfully
+        if return_code != 0:
+            raise OSError('The sorted reads could not be indexed')
 
     print('done!', file=sys.stderr)
 
@@ -144,7 +177,7 @@ def main(args):
     if args['env']:
         try:
             check_env()
-        except CalledProcessError as e:
+        except OSError as e:
             print(e.message, file=sys.stderr)
             sys.exit(1)
 
@@ -179,7 +212,7 @@ def main(args):
             aligned_reads = read_alignment(corrected_reads, args['ref'], available_threads)
 
             # Sort and index the aligned reads
-            #sorted_reads = sort_and_index(aligned_reads)
+            sorted_reads = sort_and_index(aligned_reads, available_threads)
 
             # Call the variants
             #variants = call_variants(sorted_reads, args['REF_GENOME'][0])
@@ -190,7 +223,7 @@ def main(args):
             # Print the consensus to the output file or stdout
             #print_consensus(consensus)
 
-        except CalledProcessError as e:
+        except OSError as e:
             print(e.message, file=sys.stderr)
             sys.exit(1)
 
