@@ -137,6 +137,31 @@ def read_alignment(read_file, ref_genome_file, thread_number):
     return ofile
 
 
+def sam_to_bam(read_file):
+    """
+    Convert the input file from SAM format to BAM format
+
+    read_file - reads in SAM format
+    """
+
+    ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
+
+    print('Converting the aligned reads from SAM format to BAM format...', end='', file=sys.stderr)
+
+    with open(os.devnull, 'w') as null_handle:
+        # Convert the read file format
+        return_code = subprocess.call(['samtools', 'view', '-b' '-o', ofile, read_file], stdout=null_handle,
+                                        stderr=null_handle)
+
+        # Ensure the subprocess executed successfully
+        if return_code != 0:
+            raise OSError('The reads could not be converted from SAM format to BAM format')
+
+    print('done!', file=sys.stderr)
+
+    return ofile
+
+
 def sort_and_index(read_file, thread_number):
     """
     Sort and index the aligned reads
@@ -146,13 +171,14 @@ def sort_and_index(read_file, thread_number):
     """
 
     ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads_IPA.bam')
+    temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
 
     print('Sorting and indexing the reads... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
         # Sort the read file
-        return_code = subprocess.call(['samtools', 'sort', '-o', ofile, '-@', str(thread_number), '-O', 'bam',
-                                       read_file], stdout=null_handle, stderr=null_handle)
+        return_code = subprocess.call(['samtools', 'sort', '-o', ofile, '-@', str(thread_number), '-T', temp_prefix,
+                                        read_file], stdout=null_handle, stderr=null_handle)
 
         # Ensure the subprocess executed successfully
         if return_code != 0:
@@ -211,8 +237,11 @@ def main(args):
             # Align the reads
             aligned_reads = read_alignment(corrected_reads, args['ref'], available_threads)
 
+            # Convert the aligned reads to BAM format from SAM format
+            converted_aligned_reads = sam_to_bam(aligned_reads)
+
             # Sort and index the aligned reads
-            sorted_reads = sort_and_index(aligned_reads, available_threads)
+            sorted_reads = sort_and_index(converted_aligned_reads, available_threads)
 
             # Call the variants
             #variants = call_variants(sorted_reads, args['REF_GENOME'][0])
