@@ -35,8 +35,7 @@ def check_env():
                 if return_code == 0:
                     print('"{}"'.format(util), 'found', file=sys.stderr)
                 else:
-                    raise OSError('"{}"'.format(util) + 'was not found. Ensure it is installed and in your '
-                                                                   'PATH')
+                    raise OSError('"{}"'.format(util) + 'was not found. Ensure it is installed and in your PATH')
 
             # Unsupported environments
             else:
@@ -84,12 +83,14 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     Returns the FASTQ corrected file
     """
 
+    print(read_file, file=sys.stderr)
+
     print('Correcting the reads... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
         return_code = subprocess.call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
-                                       '-matchtype='+ match_type, '-threads=' + thread_number,
-                                       '-memory=' + memory_limit, 'resultdir=' + tempfile.gettempdir(),
+                                       '-matchtype=' + match_type, '-threads=' + str(thread_number),
+                                       '-memory=' + str(memory_limit), '-resultdir=' + tempfile.gettempdir(),
                                        '-tempdir=' + tempfile.gettempdir()], stdout=null_handle, stderr=null_handle)
 
         # Ensure the subprocess executed correctly
@@ -101,6 +102,9 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     # Return the location of the output file
     ifile_suffix = os.path.split(read_file)[1]
     ofile = os.path.join(tempfile.gettempdir(), 'karect_' + ifile_suffix)
+
+    print(ofile, file=sys.stderr)
+
     return ofile
 
 
