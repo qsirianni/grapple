@@ -47,13 +47,15 @@ def check_env():
 
 def bam_to_fq(read_file):
     """
-    Convert the input file from BAM to FASTQ using SAMtools.
+    Convert the input file from BAM to FASTQ using samtools.
 
-    bam_file = file containing the NGS reads in BAM format
+    bam_file - file containing the NGS reads in BAM format
+
+    Returns the FASTQ file
     """
 
     # Create a temporary output file to place the FASTQ output in
-    ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out_IPA.fq')
+    ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out.fq')
 
     print('Converting the input from BAM format to FASTQ format... ', end='', file=sys.stderr)
 
@@ -73,11 +75,13 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     """
     Correct the raw reads using Karect.
 
-    read_file = file containing the NGS reads in FASTQ format
-    thread_number = number of threads the subprocess can use
-    memory_limit = maximum amount of memory the subprocess can use
-    cell_type = type of cell the reads are from
-    match_type = correction mode to be used
+    read_file - file containing the NGS reads in FASTQ format
+    thread_number - number of threads the subprocess can use
+    memory_limit - maximum amount of memory the subprocess can use
+    cell_type - type of cell the reads are from
+    match_type - correction mode to be used
+
+    Returns the FASTQ corrected file
     """
 
     print('Correcting the reads... ', end='', file=sys.stderr)
@@ -107,17 +111,19 @@ def read_alignment(read_file, ref_genome_file, thread_number):
     read_file - file containing the NGS reads to align in FASTQ format
     ref_genome_file - file containing the reference genome in FASTA format
     thread_number - number of threads to use during alignment
+
+    Returns the aligned FASTQ read file
     """
 
-    index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index_IPA')
-    ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads_IPA.sam')
+    index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index')
+    ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.sam')
 
     print('Aligning the reads... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
         # Create an index file from the reference genome
         return_code = subprocess.call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle,
-                                        stderr=null_handle)
+                                      stderr=null_handle)
 
         # Ensure the subprocess executed successfully
         if return_code != 0:
@@ -126,7 +132,7 @@ def read_alignment(read_file, ref_genome_file, thread_number):
         with open(ofile, 'w') as ofile_handle:
             # Align the reads
             return_code = subprocess.call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file],
-                                            stdout=ofile_handle, stderr=null_handle)
+                                          stdout=ofile_handle, stderr=null_handle)
 
             # Ensure the subprocess executed successfully
             if return_code != 0:
@@ -142,16 +148,18 @@ def sam_to_bam(read_file):
     Convert the input file from SAM format to BAM format
 
     read_file - reads in SAM format
+
+    Returns the converted BAM read file
     """
 
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
 
-    print('Converting the aligned reads from SAM format to BAM format...', end='', file=sys.stderr)
+    print('Converting the aligned reads from SAM format to BAM format... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
         # Convert the read file format
-        return_code = subprocess.call(['samtools', 'view', '-b' '-o', ofile, read_file], stdout=null_handle,
-                                        stderr=null_handle)
+        return_code = subprocess.call(['samtools', 'view', '-bo', ofile, read_file], stdout=null_handle,
+                                      stderr=null_handle)
 
         # Ensure the subprocess executed successfully
         if return_code != 0:
@@ -168,17 +176,19 @@ def sort_and_index(read_file, thread_number):
 
     read_file - aligned reads in SAM format
     thread_number - number of threads to use for sorting
+
+    Returns the sorted and indexed SAM read file
     """
 
-    ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads_IPA.bam')
     temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
+    ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads.bam')
 
     print('Sorting and indexing the reads... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
         # Sort the read file
         return_code = subprocess.call(['samtools', 'sort', '-o', ofile, '-@', str(thread_number), '-T', temp_prefix,
-                                        read_file], stdout=null_handle, stderr=null_handle)
+                                      read_file], stdout=null_handle, stderr=null_handle)
 
         # Ensure the subprocess executed successfully
         if return_code != 0:
@@ -190,6 +200,59 @@ def sort_and_index(read_file, thread_number):
         # Ensure the subprocess executed successfully
         if return_code != 0:
             raise OSError('The sorted reads could not be indexed')
+
+    print('done!', file=sys.stderr)
+
+    return ofile
+
+
+def call_variants(read_file, ref_genome_file):
+    """
+    Call the variants in the read file using the reference genome
+
+    read_file - sorted and indexed reads in BAM format
+    ref_genome_file - reference genome in FASTA format
+
+    Returns the call variants file in VCF format
+    """
+
+    pileup = os.path.join(tempfile.gettempdir(), 'pileup.vcf')
+    variants = os.path.join(tempfile.gettempdir(), 'variants.vcf')
+    ofile = os.path.join(tempfile.gettempdir(), 'consensus.fa')
+
+    print('Calling the variants... ', end='', file=sys.stderr)
+
+    with open(os.devnull, 'w') as null_handle:
+        # Run mpileup
+        return_code = subprocess.call(['samtools', 'mpileup', '-uf', ref_genome_file, '-o', pileup, read_file],
+                                      stdout=null_handle, stderr=null_handle)
+
+        # Ensure the process executed successfully
+        if return_code != 0:
+            raise OSError('The reads could not be processed before being called')
+
+        # Call the variants
+        return_code = subprocess.call(['bcftools', 'call', '-mv', '-Oz', '-o', variants, pileup], stdout=null_handle,
+                                      stderr=null_handle)
+
+        # Ensure the process executed successfully
+        if return_code != 0:
+            raise OSError('The variants could not be called')
+
+        # Index the variants
+        return_code = subprocess.call(['bcftools', 'index', variants], stdout=null_handle, stderr=null_handle)
+
+        # Ensure the process executed successfully
+        if return_code != 0:
+            raise OSError('The variant index could not be constructed')
+
+        # Generate a consensus
+        return_code = subprocess.call(['bcftools', 'consensus', '-f', ref_genome_file, '-o', ofile, variants],
+                                      stdout=null_handle, stderr=null_handle)
+
+        # Ensure the process executed successfully
+        if return_code != 0:
+            raise OSError('A consensus could not be generated from the variants')
 
     print('done!', file=sys.stderr)
 
@@ -218,7 +281,7 @@ def main(args):
             ifile = args['input']
 
         else:
-            ifile = os.path.join(tempfile.gettempdir(), 'stdin_dump_IPA.bam')
+            ifile = os.path.join(tempfile.gettempdir(), 'stdin_dump.bam')
             with open(ifile, 'wb') as ifile_handle:
                 for line in sys.stdin:
                     ifile_handle.write(line)
@@ -243,14 +306,21 @@ def main(args):
             # Sort and index the aligned reads
             sorted_reads = sort_and_index(converted_aligned_reads, available_threads)
 
-            # Call the variants
-            #variants = call_variants(sorted_reads, args['REF_GENOME'][0])
+            # Call the variants and generate a consensus
+            consensus = call_variants(sorted_reads, args['ref'])
 
-            # Create a consensus
-            #consensus = create_consensus(variants, args['REF_GENOME'][0])
+            # Determine if the user has provided an output file or wishes to use stdout
+            with open(consensus) as consensus_handle:
+                if args['output']:
+                    with open(args['output'], 'w') as ofile_handle:
+                        for line in consensus:
+                            ofile_handle.write(line)
 
-            # Print the consensus to the output file or stdout
-            #print_consensus(consensus)
+                else:
+                    for line in consensus_handle:
+                        sys.stdout.write(line)
+
+            print('The reference genome has been successfully assembled!', file=sys.stderr)
 
         except OSError as e:
             print(e.message, file=sys.stderr)
