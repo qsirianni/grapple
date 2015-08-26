@@ -83,8 +83,6 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     Returns the FASTQ corrected file
     """
 
-    print(read_file, file=sys.stderr)
-
     print('Correcting the reads... ', end='', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
@@ -102,8 +100,6 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     # Return the location of the output file
     ifile_suffix = os.path.split(read_file)[1]
     ofile = os.path.join(tempfile.gettempdir(), 'karect_' + ifile_suffix)
-
-    print(ofile, file=sys.stderr)
 
     return ofile
 
@@ -317,7 +313,7 @@ def main(args):
             with open(consensus) as consensus_handle:
                 if args['output']:
                     with open(args['output'], 'w') as ofile_handle:
-                        for line in consensus:
+                        for line in consensus_handle:
                             ofile_handle.write(line)
 
                 else:
