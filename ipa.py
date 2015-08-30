@@ -33,7 +33,7 @@ def check_env(required_utils):
             # POSIX environment
             if os.name == 'posix':
                 subprocess.check_call(['which', util], stdout=null_handle, stderr=null_handle)
-                print('"{}"'.format(util), 'found', file=sys.stderr)
+                print('{}'.format(util), 'found', file=sys.stderr)
 
             # Unsupported environments
             else:

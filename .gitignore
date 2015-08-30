@@ -1,8 +1,11 @@
-# OS X ignored files
+# OS X
 .DS_Store
 
-# PyCharm ignored files
+# PyCharm
 .idea/*
 
-# Virtual environment ignored files
+# Virtual environment
 venv/*
+
+# Python bytecode
+*.pyc
