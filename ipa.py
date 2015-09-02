@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/ python
 
 """
 Script designed to pipeline a collection of NGS reads through various utilities in order to create a
