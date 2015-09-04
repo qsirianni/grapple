@@ -64,7 +64,8 @@ def bam_to_fq(read_file):
     return ofile
 
 
-def read_correction(read_file, thread_number, memory_limit, cell_type='haploid', match_type='edit'):
+def read_correction(read_file, thread_number=psutil.cpu_count(), memory_limit=psutil.virtual_memory()[0] / 1000000000,
+                    cell_type='haploid', match_type='edit'):
     """
     Correct the raw reads using Karect.
 
@@ -94,7 +95,7 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     return ofile
 
 
-def read_alignment(read_file, ref_genome_file, thread_number):
+def read_alignment(read_file, ref_genome_file, thread_number=psutil.cpu_count()):
     """
     Align the reads to the reference genome using Bowtie2.
 
@@ -146,7 +147,7 @@ def sam_to_bam(read_file):
     return ofile
 
 
-def sort_and_index(read_file, thread_number):
+def sort_and_index(read_file, thread_number=psutil.cpu_count()):
     """
     Sort and index the aligned reads
 
@@ -217,14 +218,10 @@ def main(args):
     try:
         # The user wishes to test the environment the script is executing in
         if args['env']:
-                check_env(['karect', 'bowtie2', 'bowtie2-build', 'samtools', 'bcftools'])
+            check_env(['karect', 'bowtie2', 'bowtie2-build', 'samtools', 'bcftools'])
 
         # Start the pipeline if the user provided a reference genome
         elif args['ref']:
-            # Get system information
-            available_threads = psutil.cpu_count()
-            available_memory = psutil.virtual_memory().total / 1000000000 / 2
-
             # Determine if the user has provided an input file or wishes to use stdin
             if args['input']:
                 ifile = args['input']
@@ -240,19 +237,19 @@ def main(args):
 
                 # Correct the reads if error correction has not been disabled
                 if not args['disable_ec']:
-                    corrected_reads = read_correction(raw_reads, available_threads, available_memory)
+                    corrected_reads = read_correction(raw_reads)
 
                 else:
                     corrected_reads = raw_reads
 
                 # Align the reads
-                aligned_reads = read_alignment(corrected_reads, args['ref'], available_threads)
+                aligned_reads = read_alignment(corrected_reads, args['ref'])
 
                 # Convert the aligned reads to BAM format from SAM format
                 converted_aligned_reads = sam_to_bam(aligned_reads)
 
                 # Sort and index the aligned reads
-                sorted_reads = sort_and_index(converted_aligned_reads, available_threads)
+                sorted_reads = sort_and_index(converted_aligned_reads)
 
                 # Call the variants and generate a consensus
                 consensus = call_variants(sorted_reads, args['ref'])
@@ -286,7 +283,7 @@ def main(args):
     except CalledProcessError as e:
         # Print an error message depending on which process failed
         if e.cmd[0] == 'which':
-            print('"{}"'.format(e.cmd[1]), 'could not be located in your PATH', file=sys.stderr)
+            print('{}'.format(e.cmd[1]), 'could not be located in your PATH', file=sys.stderr)
 
         elif e.cmd[0] == 'samtools':
             if e.cmd[1] == 'bam2fq':

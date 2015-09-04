@@ -6,7 +6,6 @@ Contains unit tests for the IPA script
 Author: Quinton Sirianni
 """
 
-import filecmp
 import os
 import os.path
 import unittest
@@ -17,49 +16,54 @@ import ipa
 
 
 class TestCheckEnv(TestCase):
-    """Tests involving the check_env function"""
+    """Tests involving check_env()"""
 
-    def test_check_utils(self):
-        # Util exists
+    def setUp(self):
+        """Setup code for the tests"""
+
+        # Operating system name needs to be recorded from os module
+        self._os_name = os.name
+
+    def tearDown(self):
+        """Tear down code for tests"""
+
+        # Operating system type needs to be restored to os module
+        os.name = self._os_name
+
+    def test_utils_exist(self):
+        """Should not raise an error when checking for the echo utility"""
+
         try:
+            os.name = 'posix'
             ipa.check_env(['echo'])
 
         except CalledProcessError:
             self.fail('check_env() raised a CalledProcessError unexpectedly')
 
-        # Util doesn't exist
+    def test_utils_absent(self):
+        """Should raise an error when checking for a non-existent utility"""
+
+        os.name = 'posix'
+
         with self.assertRaises(CalledProcessError):
             ipa.check_env(['this_utility_should_not_exist'])
 
-    def test_check_OS(self):
-        # Supported environment
-        if os.name == 'posix':
-            try:
-                ipa.check_env([])
+    def test_env_is_valid(self):
+        """Should not raise an exception when environment is approved"""
 
-            except OSError:
-                self.fail('check_env() raised an OSError unexpectedly')
-
-        # Unsupported environment
-        else:
-            with self.assertRaises(OSError):
-                ipa.check_env([])
-
-
-class TestBamToFq(TestCase):
-    """Tests involving the bam_to_fq function"""
-
-    def test_conversion(self):
         try:
-            raw_reads = os.path.join('test_files', 'lambda_iontorrent.bam')
-            ref_reads = os.path.join('test_files', 'lambda_reads.fq')
-            converted_reads = ipa.bam_to_fq(raw_reads)
+            os.name = 'posix'
+            ipa.check_env(['echo'])
 
-            # Ensure conversion is correct
-            self.assertTrue(filecmp.cmp(ref_reads, converted_reads))
+        except OSError:
+            self.fail('check_env() raised an OSError unexpectedly')
 
-        except CalledProcessError:
-            self.fail('bam_to_fq() raised a CalledProcessError unexpectedly')
+    def test_env_is_bad(self):
+        """Should raise an exception when environment is not approved"""
+
+        os.name = 'nt'
+        with self.assertRaises(OSError):
+            ipa.check_env(['echo'])
 
 
 if __name__ == '__main__':
