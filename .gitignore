@@ -1,8 +1,5 @@
-# OS X ignored files
-.DS_Store
+# Compiled python
+*.pyc
 
 # PyCharm ignored files
 .idea/*
-
-# Virtual environment ignored files
-venv/*
