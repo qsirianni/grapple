@@ -195,6 +195,10 @@ def sort_and_index(read_file):
     Returns the sorted and indexed SAM read file
     """
 
+    # Ensure read file is in BAM format
+    if os.path.splitext(read_file)[1] != '.bam':
+        raise ValueError('The read file is not in BAM format')
+
     # Get system parameters
     thread_number = multiprocessing.cpu_count()
 

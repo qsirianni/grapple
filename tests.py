@@ -261,5 +261,36 @@ class TestSamToBam(TestCase):
             ipa.sam_to_bam(None)
 
 
+class TestSortAndIndex(TestCase):
+    """Test cases for sort_and_index()"""
+
+    def test_valid_file(self):
+        """Should not raise an exception when a valid file is provided"""
+
+        try:
+            ipa.sort_and_index(os.path.join('test_files', 'aligned_lambda.bam'))
+
+        except Exception as e:
+            self.fail(e.message)
+
+    def test_invalid_file(self):
+        """Should raise an exception when a file with the wrong format is used"""
+
+        with self.assertRaises(ValueError):
+            ipa.sort_and_index(os.path.join('test_files', 'lambda_ref.fa'))
+
+    def test_absent_file(self):
+        """Should raise an exception when a read file does not exist"""
+
+        with self.assertRaises(CalledProcessError):
+            ipa.sort_and_index('this_file_does_not_exist.bam')
+
+    def test_none_file(self):
+        """Should raise an exception when None is passed as the read file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.sort_and_index(None)
+
+
 if __name__ == '__main__':
     unittest.main()
