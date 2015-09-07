@@ -29,15 +29,15 @@ def check_env(required_utils):
     print('Ensuring that all necessary utilities are installed...', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
-        for util in required_utils:
-            # POSIX environment
-            if os.name == 'posix':
+        # POSIX environment
+        if os.name == 'posix':
+            for util in required_utils:
                 subprocess.check_call(['which', util], stdout=null_handle, stderr=null_handle)
                 print('{}'.format(util), 'found', file=sys.stderr)
 
-            # Unsupported environments
-            else:
-                raise OSError('This script is designed to execute in a POSIX environment only')
+        # Unsupported environments
+        else:
+            raise OSError('This script is designed to execute in a POSIX environment only')
 
     print('All necessary utilities have been found. You are ready to assemble', file=sys.stderr)
 
@@ -46,10 +46,14 @@ def bam_to_fq(read_file):
     """
     Convert the input file from BAM to FASTQ using samtools.
 
-    bam_file - file containing the NGS reads in BAM format
+    read_file - file containing the NGS reads in BAM format
 
     Returns the FASTQ file
     """
+
+    # Ensure that the file passed is in the proper format
+    if os.path.splitext(read_file)[1] != '.bam':
+        raise ValueError('The read file is not in BAM format')
 
     # Create a temporary output file to place the FASTQ output in
     ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out.fq')
