@@ -77,20 +77,20 @@ class TestCheckEnv(TestCase):
 class TestBamToFq(TestCase):
     """Tests involving bam_to_fq()"""
 
-    def setUp(self):
-        """Setup code for tests"""
-
-        # Available test file
-        self._test_file = os.path.join('test_files', 'lambda_iontorrent.bam')
-
     def test_valid_file(self):
         """Should not raise an exception when a valid bam file is used"""
 
         try:
-            ipa.bam_to_fq(self._test_file)
+            ipa.bam_to_fq(os.path.join('test_files', 'lambda_iontorrent.bam'))
 
         except Exception as e:
             self.fail(e.message)
+
+    def test_invalid_file(self):
+        """Should raise an exception when the wrong type of file is used"""
+
+        with self.assertRaises(ValueError):
+            ipa.bam_to_fq(os.path.join('test_files', 'lambda_ref.fa'))
 
     def test_absent_file(self):
         """Should raise an exception when the file does not exist"""
@@ -110,12 +110,6 @@ class TestBamToFq(TestCase):
         with self.assertRaises(AttributeError):
             ipa.bam_to_fq(None)
 
-    def test_wrong_format(self):
-        """Should raise an exception when the wrong type of file is used"""
-
-        with self.assertRaises(ValueError):
-            ipa.bam_to_fq("this_file_has_the_wrong_format.fq")
-
 
 class TestReadCorrection(TestCase):
     """Tests involving read_correction()"""
@@ -134,6 +128,12 @@ class TestReadCorrection(TestCase):
 
         except Exception as e:
             self.fail(e.message)
+
+    def test_invalid_file(self):
+        """Should raise an exception when a file with the wrong format is used"""
+
+        with self.assertRaises(ValueError):
+            ipa.read_correction(os.path.join('test_files', 'lambda_ref.fa'))
 
     def test_absent_file(self):
         """Should raise an exception when the file is not found"""
@@ -170,6 +170,64 @@ class TestReadCorrection(TestCase):
 
         with self.assertRaises(TypeError):
             ipa.read_correction(self._test_file, match_type=None)
+
+
+class TestAlignment(TestCase):
+    """Unit tests for read_alignment()"""
+
+    def setUp(self):
+        """Setup code for tests"""
+
+        # Available test file
+        self._test_file = os.path.join('test_files', 'lambda_reads.fq')
+
+        # Available reference file
+        self._ref_file = os.path.join('test_files', 'lambda_ref.fa')
+
+    def test_valid_files(self):
+        """Should not raise an exception when valid files are given as input"""
+
+        try:
+            ipa.read_alignment(self._test_file, self._ref_file)
+
+        except Exception as e:
+            self.fail(e.message)
+
+    def test_invalid_read_file(self):
+        """Should raise an exception when the read file is formatted wrong"""
+
+        with self.assertRaises(ValueError):
+            ipa.read_alignment(self._ref_file, self._ref_file)
+
+    def test_absent_read_file(self):
+        """Should raise an exception when the read file is absent"""
+
+        with self.assertRaises(CalledProcessError):
+            ipa.read_alignment('this_file_does_not_exist.fq', self._ref_file)
+
+    def test_none_read_file(self):
+        """Should raise an exception when None is passed as the read_file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.read_alignment(None, self._ref_file)
+
+    def test_invalid_ref_file(self):
+        """Should raise an exception when the reference file is in the wrong format"""
+
+        with self.assertRaises(ValueError):
+            ipa.read_alignment(self._test_file, self._test_file)
+
+    def test_absent_ref_file(self):
+        """Should raise an exception when the reference file doesn't exist"""
+
+        with self.assertRaises(CalledProcessError):
+            ipa.read_alignment(self._test_file, 'this_file_does_not_exist.fa')
+
+    def test_none_ref_file(self):
+        """Should raise an exception when None is given as the reference file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.read_alignment(self._test_file, None)
 
 
 if __name__ == '__main__':

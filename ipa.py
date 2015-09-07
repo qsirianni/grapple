@@ -130,6 +130,13 @@ def read_alignment(read_file, ref_genome_file):
     Returns the aligned FASTQ read file
     """
 
+    # Ensure the passed files are in the appropriate formats
+    if not re.match(r'\.((fq)|(fastq))', os.path.splitext(read_file)[1]):
+        raise ValueError('The read file is not in FASTQ format')
+
+    if not re.match(r'\.((fa)|(fna)|(fasta))', os.path.splitext(ref_genome_file)[1]):
+        raise ValueError('The reference genome file is not in FASTA format')
+
     # Get system parameters
     thread_number = multiprocessing.cpu_count()
 
