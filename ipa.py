@@ -9,6 +9,7 @@ Author: Quinton Sirianni
 
 from __future__ import print_function
 
+import multiprocessing
 import os
 import os.path
 import subprocess
@@ -68,8 +69,7 @@ def bam_to_fq(read_file):
     return ofile
 
 
-def read_correction(read_file, thread_number=psutil.cpu_count(), memory_limit=psutil.virtual_memory()[0] / 1000000000,
-                    cell_type='haploid', match_type='edit'):
+def read_correction(read_file, cell_type='haploid', match_type='edit'):
     """
     Correct the raw reads using Karect.
 
@@ -81,6 +81,10 @@ def read_correction(read_file, thread_number=psutil.cpu_count(), memory_limit=ps
 
     Returns the FASTQ corrected file
     """
+
+    # Get system parameters
+    thread_number = multiprocessing.cpu_count()
+    memory_limit = psutil.virtual_memory().available / 1000000000
 
     print('Correcting the reads... ', end='', file=sys.stderr)
 
@@ -99,7 +103,7 @@ def read_correction(read_file, thread_number=psutil.cpu_count(), memory_limit=ps
     return ofile
 
 
-def read_alignment(read_file, ref_genome_file, thread_number=psutil.cpu_count()):
+def read_alignment(read_file, ref_genome_file):
     """
     Align the reads to the reference genome using Bowtie2.
 
@@ -109,6 +113,9 @@ def read_alignment(read_file, ref_genome_file, thread_number=psutil.cpu_count())
 
     Returns the aligned FASTQ read file
     """
+
+    # Get system parameters
+    thread_number = multiprocessing.cpu_count()
 
     index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index')
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.sam')
@@ -151,7 +158,7 @@ def sam_to_bam(read_file):
     return ofile
 
 
-def sort_and_index(read_file, thread_number=psutil.cpu_count()):
+def sort_and_index(read_file):
     """
     Sort and index the aligned reads
 
@@ -160,6 +167,9 @@ def sort_and_index(read_file, thread_number=psutil.cpu_count()):
 
     Returns the sorted and indexed SAM read file
     """
+
+    # Get system parameters
+    thread_number = multiprocessing.cpu_count()
 
     temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
     ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads.bam')
