@@ -24,12 +24,6 @@ class TestCheckEnv(TestCase):
         # Operating system name needs to be recorded from os module
         self._os_name = os.name
 
-    def tearDown(self):
-        """Tear down code for tests"""
-
-        # Operating system type needs to be restored to os module
-        os.name = self._os_name
-
     def test_utils_exist(self):
         """Should not raise an exception when checking for the echo utility"""
 
@@ -37,8 +31,8 @@ class TestCheckEnv(TestCase):
             os.name = 'posix'
             ipa.check_env(['echo'])
 
-        except CalledProcessError:
-            self.fail('check_env() raised a CalledProcessError unexpectedly')
+        except Exception as e:
+            self.fail(e.message)
 
     def test_utils_absent(self):
         """Should raise an exception when checking for a non-existent utility"""
@@ -51,6 +45,8 @@ class TestCheckEnv(TestCase):
     def test_utils_none(self):
         """Should raise an exception when given None as the required utilities"""
 
+        os.name ='posix'
+
         with self.assertRaises(TypeError):
             ipa.check_env(None)
 
@@ -58,20 +54,11 @@ class TestCheckEnv(TestCase):
         "Should not raise an exception when given an empty list of required utilities"
 
         try:
+            os.name = 'posix'
             ipa.check_env([])
 
         except CalledProcessError:
             self.fail('check_env() raised a CalledProcessError unexpectedly')
-
-    def test_env_is_valid(self):
-        """Should not raise an exception when environment is approved"""
-
-        try:
-            os.name = 'posix'
-            ipa.check_env(['echo'])
-
-        except OSError:
-            self.fail('check_env() raised an OSError unexpectedly')
 
     def test_env_is_bad(self):
         """Should raise an exception when environment is not approved"""
@@ -79,6 +66,12 @@ class TestCheckEnv(TestCase):
         os.name = 'bad_env'
         with self.assertRaises(OSError):
             ipa.check_env(['echo'])
+
+    def tearDown(self):
+        """Tear down code for tests"""
+
+        # Operating system type needs to be restored to os module
+        os.name = self._os_name
 
 
 class TestBamToFq(TestCase):
@@ -96,8 +89,8 @@ class TestBamToFq(TestCase):
         try:
             ipa.bam_to_fq(self._test_file)
 
-        except CalledProcessError:
-            self.fail('bam_to_fq() raised a CalledProcessError unexpectedly')
+        except Exception as e:
+            self.fail(e.message)
 
     def test_absent_file(self):
         """Should raise an exception when the file does not exist"""
@@ -139,8 +132,44 @@ class TestReadCorrection(TestCase):
         try:
             ipa.read_correction(self._test_file)
 
-        except CalledProcessError:
-            self.fail('read_correction() raised a CalledProcessError unexpectedly')
+        except Exception as e:
+            self.fail(e.message)
+
+    def test_absent_file(self):
+        """Should raise an exception when the file is not found"""
+
+        with self.assertRaises(ValueError):
+            ipa.read_correction('this_file_does_not_exit.fq')
+
+    def test_none_file(self):
+        """Should raise an exception when None is passed as for the file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.read_correction(None)
+
+    def test_invalid_cell_type(self):
+        """Should raise an exception when an invalid cell type is given"""
+
+        with self.assertRaises(ValueError):
+            ipa.read_correction(self._test_file, cell_type='not_a_cell_type')
+
+    def test_none_cell_type(self):
+        """Should raise an exception when None is passed for the cell type"""
+
+        with self.assertRaises(TypeError):
+            ipa.read_correction(self._test_file, cell_type=None)
+
+    def test_invalid_match_type(self):
+        """Should raise an exception when an invalid match type is given"""
+
+        with self.assertRaises(ValueError):
+            ipa.read_correction(self._test_file, match_type='not_a_match_type')
+
+    def test_none_match_type(self):
+        """Should raise an exception when None is given as a match type"""
+
+        with self.assertRaises(TypeError):
+            ipa.read_correction(self._test_file, match_type=None)
 
 
 if __name__ == '__main__':

@@ -12,6 +12,7 @@ from __future__ import print_function
 import multiprocessing
 import os
 import os.path
+import re
 import subprocess
 import sys
 import tempfile
@@ -81,6 +82,21 @@ def read_correction(read_file, cell_type='haploid', match_type='edit'):
 
     Returns the FASTQ corrected file
     """
+
+    # Ensure the file is in FASTQ format
+    if not re.match(r'\.((fastq)|(fq))', os.path.splitext(read_file)[1]):
+        raise ValueError('The read file is not in FASTQ format')
+
+    # Ensure the file exists (karect doesn't return an error code if it doesn't)
+    if not os.path.isfile(read_file):
+        raise ValueError("The read file doesn't exist")
+
+    # Ensure that karect's parameters are valid (karect doesn't return an error code if they are not)
+    if not re.match(r'(haploid)|(diploid)', cell_type):
+        raise ValueError('The cell type is not a valid value')
+
+    if not re.match(r'(edit)|(hamming)|(insdel)', match_type):
+        raise ValueError('The match type is not a valid value')
 
     # Get system parameters
     thread_number = multiprocessing.cpu_count()
