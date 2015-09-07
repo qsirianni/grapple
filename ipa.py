@@ -168,6 +168,10 @@ def sam_to_bam(read_file):
     Returns the converted BAM read file
     """
 
+    # Ensure the read file is in SAM format
+    if os.path.splitext(read_file)[1] != '.sam':
+        raise ValueError('The read file is not in SAM format')
+
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
 
     print('Converting the aligned reads from SAM format to BAM format... ', end='', file=sys.stderr)

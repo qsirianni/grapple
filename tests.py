@@ -230,5 +230,36 @@ class TestAlignment(TestCase):
             ipa.read_alignment(self._test_file, None)
 
 
+class TestSamToBam(TestCase):
+    """Test cases for sam_to_bam() conversion"""
+
+    def test_valid_file(self):
+        """Should not raise an exception when a valid file is to be converted"""
+
+        try:
+            ipa.sam_to_bam(os.path.join('test_files', 'aligned_lambda.sam'))
+
+        except Exception as e:
+            self.fail(e.message)
+
+    def test_invalid_file(self):
+        """Should raise an exception when a file with the wrong format is converted"""
+
+        with self.assertRaises(ValueError):
+            ipa.sam_to_bam(os.path.join('test_files', 'lambda_ref.fa'))
+
+    def test_absent_file(self):
+        """Should raise an exception when the read file does not exist"""
+
+        with self.assertRaises(CalledProcessError):
+            ipa.sam_to_bam('this_file_does_not_exist.sam')
+
+    def test_none_file(self):
+        """Should raise an exception when None is passed as the read file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.sam_to_bam(None)
+
+
 if __name__ == '__main__':
     unittest.main()
