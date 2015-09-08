@@ -16,6 +16,6 @@ To run IPA, clone this respository and run the main script *ipa.py* with a Pytho
 (it should work on version 2.7 and greater). You will need to install the dependency *psutil* from 
 PyPI before the script can be used. Try the command:
 
-    pip install psutil
+    sudo pip install psutil
   
 in order to install the dependency.
