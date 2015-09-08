@@ -8,4 +8,5 @@ from distutils.core import setup
 
 setup(name='ipa',
       version='0.1.0',
-      scripts=['ipa'])
+      scripts=['ipa, ipa_tests'],
+      py_modules=['ipa, ipa_tests'])
