@@ -284,40 +284,40 @@ def main(args):
                     for line in sys.stdin:
                         ifile_handle.write(line)
 
-                # Convert the input file containing the reads from BAM to FASTQ format
-                raw_reads = bam_to_fq(ifile)
+            # Convert the input file containing the reads from BAM to FASTQ format
+            raw_reads = bam_to_fq(ifile)
 
-                # Correct the reads if error correction has not been disabled
-                if not args['disable_ec']:
-                    corrected_reads = read_correction(raw_reads)
+            # Correct the reads if error correction has not been disabled
+            if not args['disable_ec']:
+                corrected_reads = read_correction(raw_reads)
+
+            else:
+                corrected_reads = raw_reads
+
+            # Align the reads
+            aligned_reads = read_alignment(corrected_reads, args['ref'])
+
+            # Convert the aligned reads to BAM format from SAM format
+            converted_aligned_reads = sam_to_bam(aligned_reads)
+
+            # Sort and index the aligned reads
+            sorted_reads = sort_and_index(converted_aligned_reads)
+
+            # Call the variants and generate a consensus
+            consensus = call_variants(sorted_reads, args['ref'])
+
+            # Determine if the user has provided an output file or wishes to use stdout
+            with open(consensus) as consensus_handle:
+                if args['output']:
+                    with open(args['output'], 'w') as ofile_handle:
+                        for line in consensus_handle:
+                            ofile_handle.write(line)
 
                 else:
-                    corrected_reads = raw_reads
+                    for line in consensus_handle:
+                        sys.stdout.write(line)
 
-                # Align the reads
-                aligned_reads = read_alignment(corrected_reads, args['ref'])
-
-                # Convert the aligned reads to BAM format from SAM format
-                converted_aligned_reads = sam_to_bam(aligned_reads)
-
-                # Sort and index the aligned reads
-                sorted_reads = sort_and_index(converted_aligned_reads)
-
-                # Call the variants and generate a consensus
-                consensus = call_variants(sorted_reads, args['ref'])
-
-                # Determine if the user has provided an output file or wishes to use stdout
-                with open(consensus) as consensus_handle:
-                    if args['output']:
-                        with open(args['output'], 'w') as ofile_handle:
-                            for line in consensus_handle:
-                                ofile_handle.write(line)
-
-                    else:
-                        for line in consensus_handle:
-                            sys.stdout.write(line)
-
-                print('The reference genome has been successfully assembled!', file=sys.stderr)
+            print('The reference genome has been successfully assembled!', file=sys.stderr)
 
         else:
             # Raise an exception since no reference was provided
