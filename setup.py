@@ -6,7 +6,6 @@ Author: Quinton Sirianni
 
 from distutils.core import setup
 
-setup(name='ipa',
+setup(name='IPA',
       version='0.1.0',
-      scripts=['ipa, ipa_tests'],
-      py_modules=['ipa, ipa_tests'])
+      scripts=['ipa'])
