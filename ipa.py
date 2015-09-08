@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/ python
 
 """
 Script designed to pipeline a collection of NGS reads through various utilities in order to create a
@@ -9,8 +9,10 @@ Author: Quinton Sirianni
 
 from __future__ import print_function
 
+import multiprocessing
 import os
 import os.path
+import re
 import subprocess
 import sys
 import tempfile
@@ -29,15 +31,15 @@ def check_env(required_utils):
     print('Ensuring that all necessary utilities are installed...', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
-        for util in required_utils:
-            # POSIX environment
-            if os.name == 'posix':
+        # POSIX environment
+        if os.name == 'posix':
+            for util in required_utils:
                 subprocess.check_call(['which', util], stdout=null_handle, stderr=null_handle)
-                print('"{}"'.format(util), 'found', file=sys.stderr)
+                print('{}'.format(util), 'found', file=sys.stderr)
 
-            # Unsupported environments
-            else:
-                raise OSError('This script is designed to execute in a POSIX environment only')
+        # Unsupported environments
+        else:
+            raise OSError('This script is designed to execute in a POSIX environment only')
 
     print('All necessary utilities have been found. You are ready to assemble', file=sys.stderr)
 
@@ -46,10 +48,14 @@ def bam_to_fq(read_file):
     """
     Convert the input file from BAM to FASTQ using samtools.
 
-    bam_file - file containing the NGS reads in BAM format
+    read_file - file containing the NGS reads in BAM format
 
     Returns the FASTQ file
     """
+
+    # Ensure that the file passed is in the proper format
+    if os.path.splitext(read_file)[1] != '.bam':
+        raise ValueError('The read file is not in BAM format')
 
     # Create a temporary output file to place the FASTQ output in
     ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out.fq')
@@ -64,7 +70,7 @@ def bam_to_fq(read_file):
     return ofile
 
 
-def read_correction(read_file, thread_number, memory_limit, cell_type='haploid', match_type='edit'):
+def read_correction(read_file, cell_type='haploid', match_type='edit'):
     """
     Correct the raw reads using Karect.
 
@@ -76,6 +82,25 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
 
     Returns the FASTQ corrected file
     """
+
+    # Ensure the file is in FASTQ format
+    if not re.match(r'\.((fastq)|(fq))', os.path.splitext(read_file)[1]):
+        raise ValueError('The read file is not in FASTQ format')
+
+    # Ensure the file exists (karect doesn't return an error code if it doesn't)
+    if not os.path.isfile(read_file):
+        raise ValueError("The read file doesn't exist")
+
+    # Ensure that karect's parameters are valid (karect doesn't return an error code if they are not)
+    if not re.match(r'(haploid)|(diploid)', cell_type):
+        raise ValueError('The cell type is not a valid value')
+
+    if not re.match(r'(edit)|(hamming)|(insdel)', match_type):
+        raise ValueError('The match type is not a valid value')
+
+    # Get system parameters
+    thread_number = multiprocessing.cpu_count()
+    memory_limit = psutil.virtual_memory().available / 1000000000
 
     print('Correcting the reads... ', end='', file=sys.stderr)
 
@@ -94,7 +119,7 @@ def read_correction(read_file, thread_number, memory_limit, cell_type='haploid',
     return ofile
 
 
-def read_alignment(read_file, ref_genome_file, thread_number):
+def read_alignment(read_file, ref_genome_file):
     """
     Align the reads to the reference genome using Bowtie2.
 
@@ -104,6 +129,16 @@ def read_alignment(read_file, ref_genome_file, thread_number):
 
     Returns the aligned FASTQ read file
     """
+
+    # Ensure the passed files are in the appropriate formats
+    if not re.match(r'\.((fq)|(fastq))', os.path.splitext(read_file)[1]):
+        raise ValueError('The read file is not in FASTQ format')
+
+    if not re.match(r'\.((fa)|(fna)|(fasta))', os.path.splitext(ref_genome_file)[1]):
+        raise ValueError('The reference genome file is not in FASTA format')
+
+    # Get system parameters
+    thread_number = multiprocessing.cpu_count()
 
     index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index')
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.sam')
@@ -133,6 +168,10 @@ def sam_to_bam(read_file):
     Returns the converted BAM read file
     """
 
+    # Ensure the read file is in SAM format
+    if os.path.splitext(read_file)[1] != '.sam':
+        raise ValueError('The read file is not in SAM format')
+
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
 
     print('Converting the aligned reads from SAM format to BAM format... ', end='', file=sys.stderr)
@@ -146,7 +185,7 @@ def sam_to_bam(read_file):
     return ofile
 
 
-def sort_and_index(read_file, thread_number):
+def sort_and_index(read_file):
     """
     Sort and index the aligned reads
 
@@ -155,6 +194,13 @@ def sort_and_index(read_file, thread_number):
 
     Returns the sorted and indexed SAM read file
     """
+
+    # Ensure read file is in BAM format
+    if os.path.splitext(read_file)[1] != '.bam':
+        raise ValueError('The read file is not in BAM format')
+
+    # Get system parameters
+    thread_number = multiprocessing.cpu_count()
 
     temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
     ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads.bam')
@@ -183,6 +229,13 @@ def call_variants(read_file, ref_genome_file):
 
     Returns the call variants file in VCF format
     """
+
+    # Ensure the files are in the appropriate format
+    if os.path.splitext(read_file)[1] != '.bam':
+        raise ValueError('The read file is not in BAM format')
+
+    if not re.match(r'\.((fa)|(fna)|(fasta))', os.path.splitext(ref_genome_file)[1]):
+        raise ValueError('The reference genome file is not in FASTA format')
 
     pileup = os.path.join(tempfile.gettempdir(), 'pileup.vcf')
     variants = os.path.join(tempfile.gettempdir(), 'variants.vcf')
@@ -217,14 +270,10 @@ def main(args):
     try:
         # The user wishes to test the environment the script is executing in
         if args['env']:
-                check_env(['karect', 'bowtie2', 'bowtie2-build', 'samtools', 'bcftools'])
+            check_env(['karect', 'bowtie2', 'bowtie2-build', 'samtools', 'bcftools'])
 
         # Start the pipeline if the user provided a reference genome
         elif args['ref']:
-            # Get system information
-            available_threads = psutil.cpu_count()
-            available_memory = psutil.virtual_memory().total / 1000000000 / 2
-
             # Determine if the user has provided an input file or wishes to use stdin
             if args['input']:
                 ifile = args['input']
@@ -240,19 +289,19 @@ def main(args):
 
                 # Correct the reads if error correction has not been disabled
                 if not args['disable_ec']:
-                    corrected_reads = read_correction(raw_reads, available_threads, available_memory)
+                    corrected_reads = read_correction(raw_reads)
 
                 else:
                     corrected_reads = raw_reads
 
                 # Align the reads
-                aligned_reads = read_alignment(corrected_reads, args['ref'], available_threads)
+                aligned_reads = read_alignment(corrected_reads, args['ref'])
 
                 # Convert the aligned reads to BAM format from SAM format
                 converted_aligned_reads = sam_to_bam(aligned_reads)
 
                 # Sort and index the aligned reads
-                sorted_reads = sort_and_index(converted_aligned_reads, available_threads)
+                sorted_reads = sort_and_index(converted_aligned_reads)
 
                 # Call the variants and generate a consensus
                 consensus = call_variants(sorted_reads, args['ref'])
@@ -286,7 +335,7 @@ def main(args):
     except CalledProcessError as e:
         # Print an error message depending on which process failed
         if e.cmd[0] == 'which':
-            print('"{}"'.format(e.cmd[1]), 'could not be located in your PATH', file=sys.stderr)
+            print('{}'.format(e.cmd[1]), 'could not be located in your PATH', file=sys.stderr)
 
         elif e.cmd[0] == 'samtools':
             if e.cmd[1] == 'bam2fq':
