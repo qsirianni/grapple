@@ -292,5 +292,63 @@ class TestSortAndIndex(TestCase):
             ipa.sort_and_index(None)
 
 
+class TestCallVariants(TestCase):
+    """Test cases for call_variants()"""
+
+    def setUp(self):
+        """Setup code for test cases"""
+
+        # Available test file
+        self._test_file = os.path.join('test_files', 'sorted_lambda.bam')
+
+        # Available reference file
+        self._ref_file = os.path.join('test_files', 'lambda_ref.fa')
+
+    def test_valid_files(self):
+        """Should not raise an exception when supplying valid files"""
+
+        try:
+            ipa.call_variants(self._test_file, self._ref_file)
+
+        except Exception as e:
+            self.fail(e.message)
+
+    def test_invalid_read_file(self):
+        """Should raise an exception when supplying a read file with the wrong format"""
+
+        with self.assertRaises(ValueError):
+            ipa.call_variants(self._ref_file, self._ref_file)
+
+    def test_absent_read_file(self):
+        """Should raise an exception when supplying a read file that doesn't exist"""
+
+        with self.assertRaises(CalledProcessError):
+            ipa.call_variants('this_file_does_not_exist.bam', self._ref_file)
+
+    def test_none_read_file(self):
+        """Should raise an exception when None is used as the read file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.call_variants(None, self._ref_file)
+
+    def test_invalid_ref_file(self):
+        """Should raise an exception when the reference file is not in the right format"""
+
+        with self.assertRaises(ValueError):
+            ipa.call_variants(self._test_file, os.path.join('test_files', 'lambda_reads.fq'))
+
+    def test_absent_ref_file(self):
+        """Should raise an exception when the reference file doesn't exist"""
+
+        with self.assertRaises(CalledProcessError):
+            ipa.call_variants(self._test_file, 'this_file_does_not_exist.fa')
+
+    def test_none_ref_file(self):
+        """Should raise an exception when None is passed as the reference file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.call_variants(self._test_file, None)
+
+
 if __name__ == '__main__':
     unittest.main()

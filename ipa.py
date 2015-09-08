@@ -230,6 +230,13 @@ def call_variants(read_file, ref_genome_file):
     Returns the call variants file in VCF format
     """
 
+    # Ensure the files are in the appropriate format
+    if os.path.splitext(read_file)[1] != '.bam':
+        raise ValueError('The read file is not in BAM format')
+
+    if not re.match(r'\.((fa)|(fna)|(fasta))', os.path.splitext(ref_genome_file)[1]):
+        raise ValueError('The reference genome file is not in FASTA format')
+
     pileup = os.path.join(tempfile.gettempdir(), 'pileup.vcf')
     variants = os.path.join(tempfile.gettempdir(), 'variants.vcf')
     ofile = os.path.join(tempfile.gettempdir(), 'consensus.fa')
