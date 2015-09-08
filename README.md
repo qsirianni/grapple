@@ -12,8 +12,8 @@ with a bit more development.
 Using IPA
 ---------
 
-To run IPA, clone this respository and run the main script *ipa.py* with a Python interpreter 
-(it should work on version 2.7 and greater). You will need to install the dependency *psutil* from 
+To run IPA, clone this repository and run the main script *ipa.py* with a Python interpreter
+(it was designed to work on version 2.7). You will need to install the dependency *psutil* from
 PyPI before the script can be used. Try the command:
 
     sudo pip install psutil
