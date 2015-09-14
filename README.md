@@ -13,12 +13,10 @@ Using IPA
 ---------
 
 To run IPA, clone this repository and run the main script *ipa.py* with a Python interpreter
-(it was designed to work on version 2.7). You will need to install the dependency *psutil* from
+(it was designed to work on version 2.7). You will need to install IPA's dependencies from
 PyPI before the script can be used. Try the command:
 
-    sudo pip install psutil
-  
-in order to install the dependency.
+    sudo pip install -r requirements.txt
 
 IPA also requires the following utilities to be installed and in your PATH:
 
