@@ -350,5 +350,36 @@ class TestCallVariants(TestCase):
             ipa.call_variants(self._test_file, None)
 
 
+class TestFormatConsensus(TestCase):
+    """Test cases for format_consensus()"""
+
+    def test_valid_file(self):
+        """Should not raise an exception when supplying valid files"""
+
+        try:
+            ipa.format_consensus(os.path.join('test_files', 'lambda_consensus.fa'))
+
+        except Exception as e:
+            self.fail(e.message)
+
+    def test_invalid_file(self):
+        """Should raise an exception when the file is not in FASTA format"""
+
+        with self.assertRaises(ValueError):
+            ipa.format_consensus(os.path.join('test_files', 'lambda_reads.fq'))
+
+    def test_absent_file(self):
+        """Should raise an exception when the file does not exist"""
+
+        with self.assertRaises(IOError):
+            ipa.format_consensus('this_file_does_not_exist.fa')
+
+    def test_none_file(self):
+        """Should raise an exception when None is passed as a file"""
+
+        with self.assertRaises(AttributeError):
+            ipa.format_consensus(None)
+
+
 if __name__ == '__main__':
     unittest.main()

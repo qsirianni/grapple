@@ -264,6 +264,32 @@ def call_variants(read_file, ref_genome_file):
     return ofile
 
 
+def format_consensus(consensus_file):
+    """
+    Edit the consenses file to ensure it is formatted correctly
+
+    consensus_file - Consensus file to format
+    """
+
+    # Ensure the files are in the appropriate format
+    if not re.match(r'\.((fa)|(fna)|(fasta))', os.path.splitext(consensus_file)[1]):
+        raise ValueError('The consensus file is not in FASTA format')
+
+    formatted_file = os.path.join(tempfile.gettempdir(), 'formatted_consensus.fa')
+
+    print('Formatting the consensus...', end='', file=sys.stderr)
+
+    with open(consensus_file) as consensus_handle, open(formatted_file, mode='w') as formatted_handle:
+        for line in consensus_handle:
+            if re.match(r'^>', line):
+                formatted_handle.write(line)
+
+            else:
+                formatted_handle.write(line.upper())
+
+    return formatted_file
+
+
 def main(args):
     """Executes the pipeline according to the user's arguments."""
 
@@ -306,8 +332,11 @@ def main(args):
             # Call the variants and generate a consensus
             consensus = call_variants(sorted_reads, args['ref'])
 
+            # Clean up the consensus formatting
+            cleaned_consensus = format_consensus(consensus)
+
             # Determine if the user has provided an output file or wishes to use stdout
-            with open(consensus) as consensus_handle:
+            with open(cleaned_consensus) as consensus_handle:
                 if args['output']:
                     with open(args['output'], 'w') as ofile_handle:
                         for line in consensus_handle:

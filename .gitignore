@@ -6,3 +6,6 @@
 
 # Setup.py build files
 build/*
+
+# Ignored test files
+*.fai
