@@ -287,6 +287,8 @@ def format_consensus(consensus_file):
             else:
                 formatted_handle.write(line.upper())
 
+    print('done', file=sys.stderr)
+
     return formatted_file
 
 
