@@ -354,6 +354,7 @@ def main(args):
 
     except KeyboardInterrupt:
         # Exit the script cleanly if interrupted by user
+        print('')
         sys.exit(1)
 
     except (ValueError, OSError) as e:

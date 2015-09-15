@@ -6,5 +6,4 @@ setup(
     license='MIT',
     author='Quinton Sirianni',
     description='Iontorrent Pipeline Assembler',
-    scripts=['ipa.py']
-)
+    scripts=['ipa.py'])
