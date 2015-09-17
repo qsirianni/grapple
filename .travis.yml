@@ -6,7 +6,7 @@ python:
 before_install:
 # Install zlib
 - "wget http://zlib.net/zlib-1.2.8.tar.gz"
-- "tar -xzvf zlib-1.2.8.tar"
+- "tar -xzvf zlib-1.2.8.tar.gz"
 - "cd zlib-1.2.8"
 - "./configure && make && make install"
 - "cd ../"
