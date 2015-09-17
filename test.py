@@ -6,72 +6,12 @@ Contains unit tests for the IPA script
 Author: Quinton Sirianni
 """
 
-import os
 import os.path
 import unittest
 from subprocess import CalledProcessError
 from unittest import TestCase
 
 import ipa
-
-
-class TestCheckEnv(TestCase):
-    """Tests involving check_env()"""
-
-    def setUp(self):
-        """Setup code for the tests"""
-
-        # Operating system name needs to be recorded from os module
-        self._os_name = os.name
-
-    def test_utils_exist(self):
-        """Should not raise an exception when checking for the echo utility"""
-
-        try:
-            os.name = 'posix'
-            ipa.check_env(['echo'])
-
-        except Exception as e:
-            self.fail(e.message)
-
-    def test_utils_absent(self):
-        """Should raise an exception when checking for a non-existent utility"""
-
-        os.name = 'posix'
-
-        with self.assertRaises(CalledProcessError):
-            ipa.check_env(['this_utility_does_not_exist'])
-
-    def test_utils_none(self):
-        """Should raise an exception when given None as the required utilities"""
-
-        os.name ='posix'
-
-        with self.assertRaises(TypeError):
-            ipa.check_env(None)
-
-    def test_utils_empty(self):
-        "Should not raise an exception when given an empty list of required utilities"
-
-        try:
-            os.name = 'posix'
-            ipa.check_env([])
-
-        except CalledProcessError:
-            self.fail('check_env() raised a CalledProcessError unexpectedly')
-
-    def test_env_is_bad(self):
-        """Should raise an exception when environment is not approved"""
-
-        os.name = 'bad_env'
-        with self.assertRaises(OSError):
-            ipa.check_env(['echo'])
-
-    def tearDown(self):
-        """Tear down code for tests"""
-
-        # Operating system type needs to be restored to os module
-        os.name = self._os_name
 
 
 class TestBamToFq(TestCase):

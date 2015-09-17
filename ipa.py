@@ -10,7 +10,6 @@ Author: Quinton Sirianni
 from __future__ import print_function
 
 import multiprocessing
-import os
 import os.path
 import re
 import subprocess
@@ -19,29 +18,6 @@ import tempfile
 from subprocess import CalledProcessError
 
 import psutil
-
-
-def check_env(required_utils):
-    """
-    Check the execution environment to ensure all necessary utilities are installed.
-
-    required_utils - Utilities that need to be installed in order for the script to be able to execute
-    """
-
-    print('Ensuring that all necessary utilities are installed...', file=sys.stderr)
-
-    with open(os.devnull, 'w') as null_handle:
-        # POSIX environment
-        if os.name == 'posix':
-            for util in required_utils:
-                subprocess.check_call(['which', util], stdout=null_handle, stderr=null_handle)
-                print('{}'.format(util), 'found', file=sys.stderr)
-
-        # Unsupported environments
-        else:
-            raise OSError('This script is designed to execute in a POSIX environment only')
-
-    print('All necessary utilities have been found. You are ready to assemble', file=sys.stderr)
 
 
 def bam_to_fq(read_file):
@@ -296,12 +272,8 @@ def main(args):
     """Executes the pipeline according to the user's arguments."""
 
     try:
-        # The user wishes to test the environment the script is executing in
-        if args['env']:
-            check_env(['karect', 'bowtie2', 'bowtie2-build', 'samtools', 'bcftools'])
-
         # Start the pipeline if the user provided a reference genome
-        elif args['ref']:
+        if args['ref']:
             # Determine if the user has provided an input file or wishes to use stdin
             if args['input']:
                 ifile = args['input']
@@ -415,11 +387,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='IonTorrent Pipeline Assembler')
 
     parser.add_argument('-d', '--disable_ec', action='store_true', help='Disable error correction')
-
-    parser.add_argument('-e', '--env', action='store_true', help='Check the execution environment for the '
-                                                                 'necessary utilites. If this option is selected, all '
-                                                                 'other options are ignored and the main pipeline will '
-                                                                 'not be executed')
 
     parser.add_argument('-i', '--input', help='Specify an input file of NGS reads in BAM format. If flag not present, '
                                               'stdin is used instead')

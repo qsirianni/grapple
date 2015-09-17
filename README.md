@@ -24,3 +24,5 @@ IPA also requires the following utilities to be installed and in your PATH:
 * karect
 * bcftools
 * bowtie2
+
+[![Build Status](https://travis-ci.org/qsirianni/ipa.svg?branch=master)](https://travis-ci.org/qsirianni/ipa)
