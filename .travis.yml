@@ -31,6 +31,7 @@ install:
 # Install bcftools
 - "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
 - "tar -xzvf 1.2.tar.gz"
+- "echo $PWD && ls -a"
 - "cd bcftools-1.2"
 - "make HTSDIR=../htslib-1.2.1"
 - "export PATH=$PWD:$PATH"
