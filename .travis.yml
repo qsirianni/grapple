@@ -1,17 +1,30 @@
-sudo: required
+sudo: false
 language: python
 python:
   - "2.7"
 
 before_install:
-- "sudo apt-get update"
+# Install zlib
+- "wget http://zlib.net/zlib-1.2.8.tar.gz"
+- "tar -xzvf zlib-1.2.8.tar"
+- "cd zlib-1.2.8"
+- "./configure && make && make install"
+- "cd ../"
 
 install:
 # Install samtools
-- "sudo apt-get install samtools"
+- "wget https://github.com/samtools/samtools/archive/1.2.tar.gz"
+- "tar -xzvf 1.2.tar.gz"
+- "cd samtools-1.2"
+- "make && make install"
+- "cd ../"
 
 # Install bowtie2
-- "sudo apt-get install bowtie2"
+- "wget https://github.com/BenLangmead/bowtie2/archive/v2.2.6.tar.gz"
+- "tar -xzvf v2.2.6.tar.gz"
+- "cd bowtie2-2.2.6"
+- "make && make install"
+- "cd ../"
 
 # Install karect
 - "wget https://github.com/aminallam/karect/archive/v1.0.tar.gz"
@@ -22,12 +35,11 @@ install:
 - "cd ../"
 
 # Install bcftools
-- "sudo apt-get zlib1g-dev"
 - "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
 - "tar -xzvf 1.2.tar.gz"
 - "cd bcftools-1.2"
 - "make && make install"
-
+- "cd ../"
 
 # Install PIP dependencies
 - "pip install psutil"
