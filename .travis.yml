@@ -50,5 +50,5 @@ install:
 - "pip install psutil"
 
 # Run the test script
-script: "test.py"
+script: "./test.py"
 
