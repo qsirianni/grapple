@@ -28,15 +28,6 @@ install:
 - "export PATH=$PWD:$PATH"
 - "cd ../"
 
-# Install bcftools
-- "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
-- "tar -xzvf 1.2.tar.gz"
-- "echo $PWD && ls -a"
-- "cd bcftools-1.2"
-- "make HTSDIR=../htslib-1.2.1"
-- "export PATH=$PWD:$PATH"
-- "cd ../"
-
 # Install bowtie2
 - "wget https://github.com/BenLangmead/bowtie2/archive/v2.2.6.tar.gz"
 - "tar -xzvf v2.2.6.tar.gz"
