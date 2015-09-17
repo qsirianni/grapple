@@ -20,6 +20,14 @@ install:
 - "export PATH=$PWD:$PATH"
 - "cd ../"
 
+# Install bcftools
+- "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
+- "tar -xzvf 1.2.tar.gz"
+- "cd bcftools-1.2"
+- "make HTSDIR=../htslib-1.2.1"
+- "export PATH=$PWD:$PATH"
+- "cd ../"
+
 # Install samtools
 - "wget https://github.com/samtools/samtools/archive/1.2.tar.gz"
 - "tar -xzvf 1.2.tar.gz"
