@@ -3,20 +3,15 @@ language: python
 python:
   - "2.7"
 
-# Install external dependencies
-before_script:
-  - "wget https://github.com/aminallam/karect/archive/v1.0.tar.gz -O karect.tar.gz"
-  - "tar -xzf karect.tar.gz"
-  - "cd karect && make"
-  - "export PATH=$PWD:$PATH"
-
-before_install:
-  - "sudo apt-get install bowtie2"
-  - "sudo apt-get install samtools"
-  - "sudo apt-get install bcftools"
+install:
+# Install linuxbrew and install dependencies
+- "sudo apt-get install build-essential curl git m4 ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev libncurses-dev zlib1g-dev"
+- "ruby -e $(curl -fsSL https://raw.githubusercontent.com/Homebrew/linuxbrew/go/install)"
+- "brew tap homebrew/science qsirianni/bioinformatics"
+- "brew install bcftools samtools bowtie2 karect"
 
 # Install PIP dependencies
-install: "pip install -r requirements.txt"
+- "pip install psutil"
 
 # Run the test script
 script: "test.py"
