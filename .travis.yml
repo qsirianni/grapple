@@ -3,7 +3,7 @@ language: python
 python:
   - "2.7"
 
-before_install:
+install:
 # Install zlib
 - "wget http://zlib.net/zlib-1.2.8.tar.gz"
 - "tar -xzvf zlib-1.2.8.tar.gz"
@@ -12,12 +12,19 @@ before_install:
 - "export PATH=$PWD:$PATH"
 - "cd ../"
 
-install:
+# Install HTSlib
+- "wget https://github.com/samtools/htslib/archive/1.2.1.tar.gz"
+- "tar -xzvf 1.2.1.tar.gz"
+- "cd htslib-1.2.1"
+- "make"
+- "export PATH=$PWD:$PATH"
+- "cd ../"
+
 # Install samtools
 - "wget https://github.com/samtools/samtools/archive/1.2.tar.gz"
 - "tar -xzvf 1.2.tar.gz"
 - "cd samtools-1.2"
-- "make"
+- "make HTSDIR=../htslib-1.2.1"
 - "export PATH=$PWD:$PATH"
 - "cd ../"
 
@@ -41,7 +48,7 @@ install:
 - "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
 - "tar -xzvf 1.2.tar.gz"
 - "cd bcftools-1.2"
-- "make"
+- "make HTSDIR=../htslib-1.2.1"
 - "export PATH=$PWD:$PATH"
 - "cd ../"
 
