@@ -22,14 +22,14 @@ install:
 - "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
 - "tar -xzvf 1.2.tar.gz"
 - "cd bcftools-1.2"
-- "make HTSDIR=../htslib-1.2.1"
+- "make HTSDIR=../"
 - "export PATH=$PWD:$PATH"
 
 # Install samtools
 - "wget https://github.com/samtools/samtools/archive/1.2.tar.gz"
 - "tar -xzvf 1.2.tar.gz"
 - "cd samtools-1.2"
-- "make HTSDIR=../htslib-1.2.1"
+- "make HTSDIR=../../"
 - "export PATH=$PWD:$PATH"
 
 # Install bowtie2
