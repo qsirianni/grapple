@@ -335,9 +335,15 @@ def main(args):
         print('')
         sys.exit(1)
 
-    except (ValueError) as e:
+    except ValueError as e:
         # Print the error message before exiting the script
         print(e.message, file=sys.stderr)
+        sys.exit(1)
+
+    except OSError as e:
+        # Inform the user something is wrong with the execution environment
+        print('An exception has been raised. Please ensure the input and reference files exist and all of the required '
+              'utilities are installed in your PATH', file=sys.stderr)
         sys.exit(1)
 
     except CalledProcessError as e:
