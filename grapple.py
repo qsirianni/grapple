@@ -272,8 +272,12 @@ def main(args):
     """Executes the pipeline according to the user's arguments."""
 
     try:
+        # Check if the user wants the version information
+        if args['version']:
+            print('Grapple: Version 0.1.0')
+
         # Start the pipeline if the user provided a reference genome
-        if args['ref']:
+        elif args['ref']:
             # Determine if the user has provided an input file or wishes to use stdin
             if args['input']:
                 ifile = args['input']
@@ -331,17 +335,14 @@ def main(args):
         print('')
         sys.exit(1)
 
-    except (ValueError, OSError) as e:
+    except (ValueError) as e:
         # Print the error message before exiting the script
         print(e.message, file=sys.stderr)
         sys.exit(1)
 
     except CalledProcessError as e:
         # Print an error message depending on which process failed
-        if e.cmd[0] == 'which':
-            print('{}'.format(e.cmd[1]), 'could not be located in your PATH', file=sys.stderr)
-
-        elif e.cmd[0] == 'samtools':
+        if e.cmd[0] == 'samtools':
             if e.cmd[1] == 'bam2fq':
                 print('The reads could not be converted from BAM to FASTQ format', file=sys.stderr)
 
@@ -384,7 +385,7 @@ if __name__ == '__main__':
     import argparse
 
     # Setup a parser object for user args
-    parser = argparse.ArgumentParser(description='IonTorrent Pipeline Assembler')
+    parser = argparse.ArgumentParser(description='Genome Reference Assembly Pipeline')
 
     parser.add_argument('-d', '--disable_ec', action='store_true', help='Disable error correction')
 
@@ -395,6 +396,10 @@ if __name__ == '__main__':
                                                'flag not present, stdout is used instead')
 
     parser.add_argument('-r', '--ref', help='The reference genome used to align the read in FASTA format')
+
+    parser.add_argument('-V', '--version', action='store_true', help='Show the current version of the software. If this'
+                                                                     'option is selected, all other options are '
+                                                                     'ignored and the pipeline will not execute')
 
     # Retrieve the arguments and pass them to the main function
     main(vars(parser.parse_args()))

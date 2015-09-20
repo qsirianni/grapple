@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Contains unit tests for the IPA script
+Contains unit tests for the Grapple script
 
 Author: Quinton Sirianni
 """
@@ -11,7 +11,7 @@ import unittest
 from subprocess import CalledProcessError
 from unittest import TestCase
 
-import ipa
+import grapple
 
 
 class TestBamToFq(TestCase):
@@ -21,7 +21,7 @@ class TestBamToFq(TestCase):
         """Should not raise an exception when a valid bam file is used"""
 
         try:
-            ipa.bam_to_fq(os.path.join('test_files', 'lambda_iontorrent.bam'))
+            grapple.bam_to_fq(os.path.join('test_files', 'lambda_iontorrent.bam'))
 
         except Exception as e:
             self.fail(e.message)
@@ -30,25 +30,25 @@ class TestBamToFq(TestCase):
         """Should raise an exception when the wrong type of file is used"""
 
         with self.assertRaises(ValueError):
-            ipa.bam_to_fq(os.path.join('test_files', 'lambda_ref.fa'))
+            grapple.bam_to_fq(os.path.join('test_files', 'lambda_ref.fa'))
 
     def test_absent_file(self):
         """Should raise an exception when the file does not exist"""
 
         with self.assertRaises(CalledProcessError):
-            ipa.bam_to_fq('this_file_does_not_exist.bam')
+            grapple.bam_to_fq('this_file_does_not_exist.bam')
 
     def test_no_file(self):
         """Should raise an exception when no file is given"""
 
         with self.assertRaises(ValueError):
-            ipa.bam_to_fq('')
+            grapple.bam_to_fq('')
 
     def test_none_file(self):
         """Should raise an exception when None is given"""
 
         with self.assertRaises(AttributeError):
-            ipa.bam_to_fq(None)
+            grapple.bam_to_fq(None)
 
 
 class TestReadCorrection(TestCase):
@@ -64,7 +64,7 @@ class TestReadCorrection(TestCase):
         """Should not raise an exception when a valid FASTQ file is used"""
 
         try:
-            ipa.read_correction(self._test_file)
+            grapple.read_correction(self._test_file)
 
         except Exception as e:
             self.fail(e.message)
@@ -73,43 +73,43 @@ class TestReadCorrection(TestCase):
         """Should raise an exception when a file with the wrong format is used"""
 
         with self.assertRaises(ValueError):
-            ipa.read_correction(os.path.join('test_files', 'lambda_ref.fa'))
+            grapple.read_correction(os.path.join('test_files', 'lambda_ref.fa'))
 
     def test_absent_file(self):
         """Should raise an exception when the file is not found"""
 
         with self.assertRaises(ValueError):
-            ipa.read_correction('this_file_does_not_exit.fq')
+            grapple.read_correction('this_file_does_not_exit.fq')
 
     def test_none_file(self):
         """Should raise an exception when None is passed as for the file"""
 
         with self.assertRaises(AttributeError):
-            ipa.read_correction(None)
+            grapple.read_correction(None)
 
     def test_invalid_cell_type(self):
         """Should raise an exception when an invalid cell type is given"""
 
         with self.assertRaises(ValueError):
-            ipa.read_correction(self._test_file, cell_type='not_a_cell_type')
+            grapple.read_correction(self._test_file, cell_type='not_a_cell_type')
 
     def test_none_cell_type(self):
         """Should raise an exception when None is passed for the cell type"""
 
         with self.assertRaises(TypeError):
-            ipa.read_correction(self._test_file, cell_type=None)
+            grapple.read_correction(self._test_file, cell_type=None)
 
     def test_invalid_match_type(self):
         """Should raise an exception when an invalid match type is given"""
 
         with self.assertRaises(ValueError):
-            ipa.read_correction(self._test_file, match_type='not_a_match_type')
+            grapple.read_correction(self._test_file, match_type='not_a_match_type')
 
     def test_none_match_type(self):
         """Should raise an exception when None is given as a match type"""
 
         with self.assertRaises(TypeError):
-            ipa.read_correction(self._test_file, match_type=None)
+            grapple.read_correction(self._test_file, match_type=None)
 
 
 class TestAlignment(TestCase):
@@ -128,7 +128,7 @@ class TestAlignment(TestCase):
         """Should not raise an exception when valid files are given as input"""
 
         try:
-            ipa.read_alignment(self._test_file, self._ref_file)
+            grapple.read_alignment(self._test_file, self._ref_file)
 
         except Exception as e:
             self.fail(e.message)
@@ -137,37 +137,37 @@ class TestAlignment(TestCase):
         """Should raise an exception when the read file is formatted wrong"""
 
         with self.assertRaises(ValueError):
-            ipa.read_alignment(self._ref_file, self._ref_file)
+            grapple.read_alignment(self._ref_file, self._ref_file)
 
     def test_absent_read_file(self):
         """Should raise an exception when the read file is absent"""
 
         with self.assertRaises(CalledProcessError):
-            ipa.read_alignment('this_file_does_not_exist.fq', self._ref_file)
+            grapple.read_alignment('this_file_does_not_exist.fq', self._ref_file)
 
     def test_none_read_file(self):
         """Should raise an exception when None is passed as the read_file"""
 
         with self.assertRaises(AttributeError):
-            ipa.read_alignment(None, self._ref_file)
+            grapple.read_alignment(None, self._ref_file)
 
     def test_invalid_ref_file(self):
         """Should raise an exception when the reference file is in the wrong format"""
 
         with self.assertRaises(ValueError):
-            ipa.read_alignment(self._test_file, self._test_file)
+            grapple.read_alignment(self._test_file, self._test_file)
 
     def test_absent_ref_file(self):
         """Should raise an exception when the reference file doesn't exist"""
 
         with self.assertRaises(CalledProcessError):
-            ipa.read_alignment(self._test_file, 'this_file_does_not_exist.fa')
+            grapple.read_alignment(self._test_file, 'this_file_does_not_exist.fa')
 
     def test_none_ref_file(self):
         """Should raise an exception when None is given as the reference file"""
 
         with self.assertRaises(AttributeError):
-            ipa.read_alignment(self._test_file, None)
+            grapple.read_alignment(self._test_file, None)
 
 
 class TestSamToBam(TestCase):
@@ -177,7 +177,7 @@ class TestSamToBam(TestCase):
         """Should not raise an exception when a valid file is to be converted"""
 
         try:
-            ipa.sam_to_bam(os.path.join('test_files', 'aligned_lambda.sam'))
+            grapple.sam_to_bam(os.path.join('test_files', 'aligned_lambda.sam'))
 
         except Exception as e:
             self.fail(e.message)
@@ -186,19 +186,19 @@ class TestSamToBam(TestCase):
         """Should raise an exception when a file with the wrong format is converted"""
 
         with self.assertRaises(ValueError):
-            ipa.sam_to_bam(os.path.join('test_files', 'lambda_ref.fa'))
+            grapple.sam_to_bam(os.path.join('test_files', 'lambda_ref.fa'))
 
     def test_absent_file(self):
         """Should raise an exception when the read file does not exist"""
 
         with self.assertRaises(CalledProcessError):
-            ipa.sam_to_bam('this_file_does_not_exist.sam')
+            grapple.sam_to_bam('this_file_does_not_exist.sam')
 
     def test_none_file(self):
         """Should raise an exception when None is passed as the read file"""
 
         with self.assertRaises(AttributeError):
-            ipa.sam_to_bam(None)
+            grapple.sam_to_bam(None)
 
 
 class TestSortAndIndex(TestCase):
@@ -208,7 +208,7 @@ class TestSortAndIndex(TestCase):
         """Should not raise an exception when a valid file is provided"""
 
         try:
-            ipa.sort_and_index(os.path.join('test_files', 'aligned_lambda.bam'))
+            grapple.sort_and_index(os.path.join('test_files', 'aligned_lambda.bam'))
 
         except Exception as e:
             self.fail(e.message)
@@ -217,19 +217,19 @@ class TestSortAndIndex(TestCase):
         """Should raise an exception when a file with the wrong format is used"""
 
         with self.assertRaises(ValueError):
-            ipa.sort_and_index(os.path.join('test_files', 'lambda_ref.fa'))
+            grapple.sort_and_index(os.path.join('test_files', 'lambda_ref.fa'))
 
     def test_absent_file(self):
         """Should raise an exception when a read file does not exist"""
 
         with self.assertRaises(CalledProcessError):
-            ipa.sort_and_index('this_file_does_not_exist.bam')
+            grapple.sort_and_index('this_file_does_not_exist.bam')
 
     def test_none_file(self):
         """Should raise an exception when None is passed as the read file"""
 
         with self.assertRaises(AttributeError):
-            ipa.sort_and_index(None)
+            grapple.sort_and_index(None)
 
 
 class TestCallVariants(TestCase):
@@ -248,7 +248,7 @@ class TestCallVariants(TestCase):
         """Should not raise an exception when supplying valid files"""
 
         try:
-            ipa.call_variants(self._test_file, self._ref_file)
+            grapple.call_variants(self._test_file, self._ref_file)
 
         except Exception as e:
             self.fail(e.message)
@@ -257,37 +257,37 @@ class TestCallVariants(TestCase):
         """Should raise an exception when supplying a read file with the wrong format"""
 
         with self.assertRaises(ValueError):
-            ipa.call_variants(self._ref_file, self._ref_file)
+            grapple.call_variants(self._ref_file, self._ref_file)
 
     def test_absent_read_file(self):
         """Should raise an exception when supplying a read file that doesn't exist"""
 
         with self.assertRaises(CalledProcessError):
-            ipa.call_variants('this_file_does_not_exist.bam', self._ref_file)
+            grapple.call_variants('this_file_does_not_exist.bam', self._ref_file)
 
     def test_none_read_file(self):
         """Should raise an exception when None is used as the read file"""
 
         with self.assertRaises(AttributeError):
-            ipa.call_variants(None, self._ref_file)
+            grapple.call_variants(None, self._ref_file)
 
     def test_invalid_ref_file(self):
         """Should raise an exception when the reference file is not in the right format"""
 
         with self.assertRaises(ValueError):
-            ipa.call_variants(self._test_file, os.path.join('test_files', 'lambda_reads.fq'))
+            grapple.call_variants(self._test_file, os.path.join('test_files', 'lambda_reads.fq'))
 
     def test_absent_ref_file(self):
         """Should raise an exception when the reference file doesn't exist"""
 
         with self.assertRaises(CalledProcessError):
-            ipa.call_variants(self._test_file, 'this_file_does_not_exist.fa')
+            grapple.call_variants(self._test_file, 'this_file_does_not_exist.fa')
 
     def test_none_ref_file(self):
         """Should raise an exception when None is passed as the reference file"""
 
         with self.assertRaises(AttributeError):
-            ipa.call_variants(self._test_file, None)
+            grapple.call_variants(self._test_file, None)
 
 
 class TestFormatConsensus(TestCase):
@@ -297,7 +297,7 @@ class TestFormatConsensus(TestCase):
         """Should not raise an exception when supplying valid files"""
 
         try:
-            ipa.format_consensus(os.path.join('test_files', 'lambda_consensus.fa'))
+            grapple.format_consensus(os.path.join('test_files', 'lambda_consensus.fa'))
 
         except Exception as e:
             self.fail(e.message)
@@ -306,19 +306,19 @@ class TestFormatConsensus(TestCase):
         """Should raise an exception when the file is not in FASTA format"""
 
         with self.assertRaises(ValueError):
-            ipa.format_consensus(os.path.join('test_files', 'lambda_reads.fq'))
+            grapple.format_consensus(os.path.join('test_files', 'lambda_reads.fq'))
 
     def test_absent_file(self):
         """Should raise an exception when the file does not exist"""
 
         with self.assertRaises(IOError):
-            ipa.format_consensus('this_file_does_not_exist.fa')
+            grapple.format_consensus('this_file_does_not_exist.fa')
 
     def test_none_file(self):
         """Should raise an exception when None is passed as a file"""
 
         with self.assertRaises(AttributeError):
-            ipa.format_consensus(None)
+            grapple.format_consensus(None)
 
 
 if __name__ == '__main__':

@@ -1,9 +1,9 @@
 from distutils.core import setup
 
 setup(
-    name='IPA',
+    name='Grapple',
     version='0.1.0',
     license='MIT',
     author='Quinton Sirianni',
-    description='Iontorrent Pipeline Assembler',
-    scripts=['ipa.py'])
+    description='Genome Reference Assembly Pipeline',
+    scripts=['grapple.py'])
