@@ -20,7 +20,7 @@ from subprocess import CalledProcessError
 import psutil
 
 
-def bam_to_fq(read_file):
+def bam_to_fq(read_file, verbose=False):
     """
     Convert the input file from BAM to FASTQ using samtools.
 
@@ -36,17 +36,18 @@ def bam_to_fq(read_file):
     # Create a temporary output file to place the FASTQ output in
     ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out.fq')
 
-    print('Converting the input from BAM format to FASTQ format... ', end='', file=sys.stderr)
+    print('Converting the input from BAM format to FASTQ format... ', file=sys.stderr)
 
     with open(ofile, 'w') as ofile_handle, open(os.devnull, 'w') as null_handle:
-        subprocess.check_call(['samtools', 'bam2fq', read_file], stdout=ofile_handle, stderr=null_handle)
+        err_handle = sys.stderr if verbose else null_handle
 
-    print('done!', file=sys.stderr)
+        # Convert the input from BAM to FASTQ
+        subprocess.check_call(['samtools', 'bam2fq', read_file], stdout=ofile_handle, stderr=err_handle)
 
     return ofile
 
 
-def read_correction(read_file, cell_type='haploid', match_type='edit'):
+def read_correction(read_file, cell_type='haploid', match_type='edit', verbose=False):
     """
     Correct the raw reads using Karect.
 
@@ -78,15 +79,17 @@ def read_correction(read_file, cell_type='haploid', match_type='edit'):
     thread_number = multiprocessing.cpu_count()
     memory_limit = psutil.virtual_memory().available / 1000000000
 
-    print('Correcting the reads... ', end='', file=sys.stderr)
+    print('Correcting the reads... ', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
+        err_handle = sys.stderr if verbose else null_handle
+
+        # Correct the reads
+        # Note: Karect uses stdout rather than stderr for user information so stdout is redirected to err_handle
         subprocess.check_call(['karect', '-correct', '-inputfile=' + read_file, '-celltype=' + cell_type,
                                '-matchtype=' + match_type, '-threads=' + str(thread_number),
                                '-memory=' + str(memory_limit), '-resultdir=' + tempfile.gettempdir(),
-                               '-tempdir=' + tempfile.gettempdir()], stdout=null_handle, stderr=null_handle)
-
-    print('done!', file=sys.stderr)
+                               '-tempdir=' + tempfile.gettempdir()], stdout=err_handle, stderr=err_handle)
 
     # Return the location of the output file
     ifile_suffix = os.path.split(read_file)[1]
@@ -95,7 +98,7 @@ def read_correction(read_file, cell_type='haploid', match_type='edit'):
     return ofile
 
 
-def read_alignment(read_file, ref_genome_file):
+def read_alignment(read_file, ref_genome_file, verbose=False):
     """
     Align the reads to the reference genome using Bowtie2.
 
@@ -119,23 +122,23 @@ def read_alignment(read_file, ref_genome_file):
     index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index')
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.sam')
 
-    print('Aligning the reads... ', end='', file=sys.stderr)
+    print('Aligning the reads... ', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
+        err_handle = sys.stderr if verbose else null_handle
+
         # Create an index file from the reference genome
-        subprocess.check_call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle, stderr=null_handle)
+        subprocess.check_call(['bowtie2-build', ref_genome_file, index_prefix], stdout=null_handle, stderr=err_handle)
 
         with open(ofile, 'w') as ofile_handle:
             # Align the reads
             subprocess.check_call(['bowtie2', '-p', str(thread_number), '-x', index_prefix, '-U', read_file],
-                                  stdout=ofile_handle, stderr=null_handle)
-
-    print('done!', file=sys.stderr)
+                                  stdout=ofile_handle, stderr=err_handle)
 
     return ofile
 
 
-def sam_to_bam(read_file):
+def sam_to_bam(read_file, verbose=False):
     """
     Convert the input file from SAM format to BAM format
 
@@ -150,18 +153,18 @@ def sam_to_bam(read_file):
 
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
 
-    print('Converting the aligned reads from SAM format to BAM format... ', end='', file=sys.stderr)
+    print('Converting the aligned reads from SAM format to BAM format... ', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
-        # Convert the read file format
-        subprocess.check_call(['samtools', 'view', '-bo', ofile, read_file], stdout=null_handle, stderr=null_handle)
+        err_handle = sys.stderr if verbose else null_handle
 
-    print('done!', file=sys.stderr)
+        # Convert the read file format
+        subprocess.check_call(['samtools', 'view', '-bo', ofile, read_file], stdout=null_handle, stderr=err_handle)
 
     return ofile
 
 
-def sort_and_index(read_file):
+def sort_and_index(read_file, verbose=False):
     """
     Sort and index the aligned reads
 
@@ -181,22 +184,22 @@ def sort_and_index(read_file):
     temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
     ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads.bam')
 
-    print('Sorting and indexing the reads... ', end='', file=sys.stderr)
+    print('Sorting and indexing the reads... ', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
+        err_handle = sys.stderr if verbose else null_handle
+
         # Sort the read file
         subprocess.check_call(['samtools', 'sort', '-o', ofile, '-@', str(thread_number), '-T', temp_prefix, read_file],
-                              stdout=null_handle, stderr=null_handle)
+                              stdout=null_handle, stderr=err_handle)
 
         # Index the sorted reads
-        subprocess.check_call(['samtools', 'index', ofile], stdout=null_handle, stderr=null_handle)
-
-    print('done!', file=sys.stderr)
+        subprocess.check_call(['samtools', 'index', ofile], stdout=null_handle, stderr=err_handle)
 
     return ofile
 
 
-def call_variants(read_file, ref_genome_file):
+def call_variants(read_file, ref_genome_file, verbose=False):
     """
     Call the variants in the read file using the reference genome
 
@@ -217,25 +220,25 @@ def call_variants(read_file, ref_genome_file):
     variants = os.path.join(tempfile.gettempdir(), 'variants.vcf')
     ofile = os.path.join(tempfile.gettempdir(), 'consensus.fa')
 
-    print('Calling the variants... ', end='', file=sys.stderr)
+    print('Calling the variants... ', file=sys.stderr)
 
     with open(os.devnull, 'w') as null_handle:
+        err_handle = sys.stderr if verbose else null_handle
+
         # Run mpileup
         subprocess.check_call(['samtools', 'mpileup', '-uf', ref_genome_file, '-o', pileup, read_file],
-                              stdout=null_handle, stderr=null_handle)
+                              stdout=null_handle, stderr=err_handle)
 
         # Call the variants
-        subprocess.check_call(['bcftools', 'call', '-mv', '-Oz', '-o', variants, pileup], stdout=null_handle,
+        subprocess.check_call(['bcftools', 'call', '-mv', '-Oz', '-o', variants, pileup], stdout=err_handle,
                               stderr=null_handle)
 
         # Index the variants
-        subprocess.check_call(['bcftools', 'index', variants], stdout=null_handle, stderr=null_handle)
+        subprocess.check_call(['bcftools', 'index', variants], stdout=null_handle, stderr=err_handle)
 
         # Generate a consensus
         subprocess.check_call(['bcftools', 'consensus', '-f', ref_genome_file, '-o', ofile, variants],
-                              stdout=null_handle, stderr=null_handle)
-
-    print('done!', file=sys.stderr)
+                              stdout=null_handle, stderr=err_handle)
 
     return ofile
 
@@ -253,8 +256,9 @@ def format_consensus(consensus_file):
 
     formatted_file = os.path.join(tempfile.gettempdir(), 'formatted_consensus.fa')
 
-    print('Formatting the consensus...', end='', file=sys.stderr)
+    print('Formatting the consensus...', file=sys.stderr)
 
+    # Format the consensus reads
     with open(consensus_file) as consensus_handle, open(formatted_file, mode='w') as formatted_handle:
         for line in consensus_handle:
             if re.match(r'^>', line):
@@ -262,8 +266,6 @@ def format_consensus(consensus_file):
 
             else:
                 formatted_handle.write(line.upper())
-
-    print('done', file=sys.stderr)
 
     return formatted_file
 
@@ -289,26 +291,26 @@ def main(args):
                         ifile_handle.write(line)
 
             # Convert the input file containing the reads from BAM to FASTQ format
-            raw_reads = bam_to_fq(ifile)
+            raw_reads = bam_to_fq(ifile, args['verbose'])
 
             # Correct the reads if error correction has not been disabled
             if not args['disable_ec']:
-                corrected_reads = read_correction(raw_reads)
+                corrected_reads = read_correction(raw_reads, verbose=args['verbose'])
 
             else:
                 corrected_reads = raw_reads
 
             # Align the reads
-            aligned_reads = read_alignment(corrected_reads, args['ref'])
+            aligned_reads = read_alignment(corrected_reads, args['ref'], args['verbose'])
 
             # Convert the aligned reads to BAM format from SAM format
-            converted_aligned_reads = sam_to_bam(aligned_reads)
+            converted_aligned_reads = sam_to_bam(aligned_reads, args['verbose'])
 
             # Sort and index the aligned reads
-            sorted_reads = sort_and_index(converted_aligned_reads)
+            sorted_reads = sort_and_index(converted_aligned_reads, args['verbose'])
 
             # Call the variants and generate a consensus
-            consensus = call_variants(sorted_reads, args['ref'])
+            consensus = call_variants(sorted_reads, args['ref'], args['verbose'])
 
             # Clean up the consensus formatting
             cleaned_consensus = format_consensus(consensus)
@@ -342,7 +344,7 @@ def main(args):
 
     except OSError as e:
         # Inform the user something is wrong with the execution environment
-        print('An exception has been raised. Please ensure the input and reference files exist and all of the required '
+        print('An error has occurred. Please ensure the input and reference files exist and all of the required '
               'utilities are installed in your PATH', file=sys.stderr)
         sys.exit(1)
 
@@ -402,6 +404,9 @@ if __name__ == '__main__':
                                                'flag not present, stdout is used instead')
 
     parser.add_argument('-r', '--ref', help='The reference genome used to align the read in FASTA format')
+
+    parser.add_argument('-v', '--verbose', action='store_true', help='Output more information about each subprocess'
+                                                                     'being executed')
 
     parser.add_argument('-V', '--version', action='store_true', help='Show the current version of the software. If this'
                                                                      'option is selected, all other options are '
