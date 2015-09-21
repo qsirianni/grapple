@@ -1,9 +1,6 @@
 # Compiled python
 *.pyc
 
-# PyCharm ignored files
-.idea/*
-
 # Setup.py build files
 build/*
 
