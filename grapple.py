@@ -61,7 +61,7 @@ def bam_to_fq(read_file, verbose=False):
     # Create a temporary output file to place the FASTQ output in
     ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out.fq')
 
-    status('Converting the input from BAM format to FASTQ format...')
+    status('Converting the input from BAM format to FASTQ format')
 
     with open(ofile, 'w') as ofile_handle, open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -104,7 +104,7 @@ def read_correction(read_file, cell_type='haploid', match_type='edit', verbose=F
     thread_number = multiprocessing.cpu_count()
     memory_limit = psutil.virtual_memory().available / 1000000000
 
-    status('Correcting the reads...')
+    status('Correcting the reads')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -147,7 +147,7 @@ def read_alignment(read_file, ref_genome_file, verbose=False):
     index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index')
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.sam')
 
-    status('Aligning the reads...')
+    status('Aligning the reads')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -178,7 +178,7 @@ def sam_to_bam(read_file, verbose=False):
 
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
 
-    status('Converting the aligned reads from SAM format to BAM format...')
+    status('Converting the aligned reads from SAM format to BAM format')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -209,7 +209,7 @@ def sort_and_index(read_file, verbose=False):
     temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
     ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads.bam')
 
-    status('Sorting and indexing the reads...')
+    status('Sorting and indexing the reads')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -245,7 +245,7 @@ def call_variants(read_file, ref_genome_file, verbose=False):
     variants = os.path.join(tempfile.gettempdir(), 'variants.vcf')
     ofile = os.path.join(tempfile.gettempdir(), 'consensus.fa')
 
-    status('Calling the variants...')
+    status('Calling the variants')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -281,7 +281,7 @@ def format_consensus(consensus_file):
 
     formatted_file = os.path.join(tempfile.gettempdir(), 'formatted_consensus.fa')
 
-    status('Formatting the consensus...')
+    status('Formatting the consensus')
 
     # Format the consensus reads
     with open(consensus_file) as consensus_handle, open(formatted_file, mode='w') as formatted_handle:
@@ -305,53 +305,75 @@ def main(args):
 
         # Start the pipeline if the user provided a reference genome
         elif args['ref']:
-            # Determine if the user has provided an input file or wishes to use stdin
-            if args['input']:
-                ifile = args['input']
+            # Ensure the reference file exists
+            if not os.path.isfile(args['ref']):
+                raise IOError()
 
             else:
-                ifile = os.path.join(tempfile.gettempdir(), 'stdin_dump.bam')
-                with open(ifile, 'wb') as ifile_handle:
-                    for line in sys.stdin:
-                        ifile_handle.write(line)
-
-            # Convert the input file containing the reads from BAM to FASTQ format
-            raw_reads = bam_to_fq(ifile, args['verbose'])
-
-            # Correct the reads if error correction has not been disabled
-            if not args['disable_ec']:
-                corrected_reads = read_correction(raw_reads, verbose=args['verbose'])
-
-            else:
-                corrected_reads = raw_reads
-
-            # Align the reads
-            aligned_reads = read_alignment(corrected_reads, args['ref'], args['verbose'])
-
-            # Convert the aligned reads to BAM format from SAM format
-            converted_aligned_reads = sam_to_bam(aligned_reads, args['verbose'])
-
-            # Sort and index the aligned reads
-            sorted_reads = sort_and_index(converted_aligned_reads, args['verbose'])
-
-            # Call the variants and generate a consensus
-            consensus = call_variants(sorted_reads, args['ref'], args['verbose'])
-
-            # Clean up the consensus formatting
-            cleaned_consensus = format_consensus(consensus)
-
-            # Determine if the user has provided an output file or wishes to use stdout
-            with open(cleaned_consensus) as consensus_handle:
-                if args['output']:
-                    with open(args['output'], 'w') as ofile_handle:
-                        for line in consensus_handle:
-                            ofile_handle.write(line)
+                # Determine if the user has provided an input file or wishes to use stdin
+                if args['input']:
+                    # Ensure the file exists
+                    if os.path.isfile(args['input']):
+                        ifile = args['input']
+                    else:
+                        raise IOError()
 
                 else:
-                    for line in consensus_handle:
-                        sys.stdout.write(line)
+                    ifile = os.path.join(tempfile.gettempdir(), 'stdin_dump.bam')
+                    with open(ifile, 'wb') as ifile_handle:
+                        for line in sys.stdin:
+                            ifile_handle.write(line)
 
-            status('The reference genome has been successfully assembled!')
+                # Convert the input file containing the reads from BAM to FASTQ format
+                raw_reads = bam_to_fq(ifile, args['verbose'])
+
+                # Correct the reads if error correction has not been disabled
+                if not args['disable_ec']:
+                    # Transform the command line arguments into values Karect can use
+                    ploidy = 'haploid' if args['ploidy'] == 'n' else 'diploid'
+
+                    if args['mode'] == 'equal':
+                        mode = 'edit'
+
+                    elif args['mode'] == 'indel':
+                        mode = 'insdel'
+
+                    else:
+                        mode = 'hamming'
+
+                    # Run Karect
+                    corrected_reads = read_correction(raw_reads, ploidy, mode, args['verbose'])
+
+                else:
+                    corrected_reads = raw_reads
+
+                # Align the reads
+                aligned_reads = read_alignment(corrected_reads, args['ref'], args['verbose'])
+
+                # Convert the aligned reads to BAM format from SAM format
+                converted_aligned_reads = sam_to_bam(aligned_reads, args['verbose'])
+
+                # Sort and index the aligned reads
+                sorted_reads = sort_and_index(converted_aligned_reads, args['verbose'])
+
+                # Call the variants and generate a consensus
+                consensus = call_variants(sorted_reads, args['ref'], args['verbose'])
+
+                # Clean up the consensus formatting
+                cleaned_consensus = format_consensus(consensus)
+
+                # Determine if the user has provided an output file or wishes to use stdout
+                with open(cleaned_consensus) as consensus_handle:
+                    if args['output']:
+                        with open(args['output'], 'w') as ofile_handle:
+                            for line in consensus_handle:
+                                ofile_handle.write(line)
+
+                    else:
+                        for line in consensus_handle:
+                            sys.stdout.write(line)
+
+                status('The reference genome has been successfully assembled!')
 
         else:
             # Raise an exception since no reference was provided
@@ -365,7 +387,7 @@ def main(args):
         # Print the error message before exiting the script
         error(e.message)
 
-    except OSError:
+    except EnvironmentError:
         # Inform the user something is wrong with the execution environment
         error('An error has occurred. Please ensure the input and reference files exist and all of the '
               'required utilities are installed in your PATH')
@@ -412,9 +434,11 @@ if __name__ == '__main__':
     import argparse
 
     # Setup a parser object for user args
-    parser = argparse.ArgumentParser(description='Genome Reference Assembly Pipeline')
+    parser = argparse.ArgumentParser(description='Genome Reference Assembly Pipeline', add_help=False)
 
     parser.add_argument('-d', '--disable_ec', action='store_true', help='Disable error correction')
+
+    parser.add_argument('-h', '--help', action='help', help='Display this help screen')
 
     parser.add_argument('-i', '--input', help='Specify an input file of NGS reads in BAM format. If this flag is '
                                               'not present, stdin is used instead')
@@ -427,9 +451,17 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true', help='Output more information about each subprocess '
                                                                      'being executed')
 
-    parser.add_argument('-V', '--version', action='store_true', help='Show the current version of the software. If '
-                                                                     'this option is selected, all other options are '
-                                                                     'ignored and the pipeline will not execute')
+    parser.add_argument('-V', '--version', action='store_true', help='Show the current version of the software.')
+
+    parser.add_argument('--ploidy', choices=['n', '2n'], default='n', help='Specify the ploidy of the cells from which '
+                                                                           'the reads came from. If error correction '
+                                                                           'is disabled, this option is ignored. '
+                                                                           'Default value = n')
+
+    parser.add_argument('--mode', choices=['equal', 'indel', 'subs'], default='equal',
+                        help='Specify the type of errors that should be favoured during read correction '
+                             'The equal option weighs all types of errors equally. If error correction is disabled, '
+                             'this option is ignored. Default value = equal')
 
     # Retrieve the arguments and pass them to the main function
     main(vars(parser.parse_args()))
