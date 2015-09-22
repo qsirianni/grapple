@@ -14,6 +14,16 @@ from unittest import TestCase
 import grapple
 
 
+class TestError(TestCase):
+    """Tests involving error()"""
+
+    def test_exit(self):
+        """Should raise an exception to exit the script when called with any message"""
+
+        with self.assertRaises(SystemExit):
+            grapple.error('An error has occurred')
+
+
 class TestBamToFq(TestCase):
     """Tests involving bam_to_fq()"""
 

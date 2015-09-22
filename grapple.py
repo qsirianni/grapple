@@ -20,6 +20,31 @@ from subprocess import CalledProcessError
 import psutil
 
 
+def error(message):
+    """
+    Print an error message in stderr
+
+    message - the error message to print
+    """
+
+    # Print the error message as red text using escape codes
+    print('\x1B[31m', message, '\x1B[0m', file=sys.stderr)
+
+    # Exit the script with an error code
+    sys.exit(1)
+
+
+def status(message):
+    """
+    Print a status message in stderr
+
+    message - the status message to print
+    """
+
+    # Print the status message as green text using escape codes
+    print('\x1B[32m', message, '\x1B[0m', file=sys.stderr)
+
+
 def bam_to_fq(read_file, verbose=False):
     """
     Convert the input file from BAM to FASTQ using samtools.
@@ -36,7 +61,7 @@ def bam_to_fq(read_file, verbose=False):
     # Create a temporary output file to place the FASTQ output in
     ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out.fq')
 
-    print('\x1B[1;32mConverting the input from BAM format to FASTQ format...\x1B[0;m', file=sys.stderr)
+    status('Converting the input from BAM format to FASTQ format...')
 
     with open(ofile, 'w') as ofile_handle, open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -79,7 +104,7 @@ def read_correction(read_file, cell_type='haploid', match_type='edit', verbose=F
     thread_number = multiprocessing.cpu_count()
     memory_limit = psutil.virtual_memory().available / 1000000000
 
-    print('\x1B[1;32mCorrecting the reads...\x1B[0;m', file=sys.stderr)
+    status('Correcting the reads...')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -122,7 +147,7 @@ def read_alignment(read_file, ref_genome_file, verbose=False):
     index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index')
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.sam')
 
-    print('\x1B[1;32mAligning the reads...\x1B[0;m', file=sys.stderr)
+    status('Aligning the reads...')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -153,7 +178,7 @@ def sam_to_bam(read_file, verbose=False):
 
     ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
 
-    print('\x1B[1;32mConverting the aligned reads from SAM format to BAM format...\x1B[0;m', file=sys.stderr)
+    status('Converting the aligned reads from SAM format to BAM format...')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -184,7 +209,7 @@ def sort_and_index(read_file, verbose=False):
     temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
     ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads.bam')
 
-    print('\x1B[1;32mSorting and indexing the reads...\x1B[0;m', file=sys.stderr)
+    status('Sorting and indexing the reads...')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -220,7 +245,7 @@ def call_variants(read_file, ref_genome_file, verbose=False):
     variants = os.path.join(tempfile.gettempdir(), 'variants.vcf')
     ofile = os.path.join(tempfile.gettempdir(), 'consensus.fa')
 
-    print('\x1B[1;32mCalling the variants...\x1B[0;m', file=sys.stderr)
+    status('Calling the variants...')
 
     with open(os.devnull, 'w') as null_handle:
         err_handle = sys.stderr if verbose else null_handle
@@ -256,7 +281,7 @@ def format_consensus(consensus_file):
 
     formatted_file = os.path.join(tempfile.gettempdir(), 'formatted_consensus.fa')
 
-    print('\x1B[1;32mFormatting the consensus...\x1B[0;m', file=sys.stderr)
+    status('Formatting the consensus...')
 
     # Format the consensus reads
     with open(consensus_file) as consensus_handle, open(formatted_file, mode='w') as formatted_handle:
@@ -326,69 +351,61 @@ def main(args):
                     for line in consensus_handle:
                         sys.stdout.write(line)
 
-            print('\x1B[1;32mThe reference genome has been successfully assembled!\x1B[0;m', file=sys.stderr)
+            status('The reference genome has been successfully assembled!')
 
         else:
             # Raise an exception since no reference was provided
-            raise ValueError('\x1B[1;31mA reference genome was not provided so the pipeline cannot execute\x1B[0;m')
+            raise ValueError('A reference genome was not provided so the pipeline cannot execute')
 
     except KeyboardInterrupt:
         # Exit the script cleanly if interrupted by user
-        print('')
-        sys.exit(1)
+        error('')
 
     except ValueError as e:
         # Print the error message before exiting the script
-        print(e.message, file=sys.stderr)
-        sys.exit(1)
+        error(e.message)
 
     except OSError:
         # Inform the user something is wrong with the execution environment
-        print('\x1B[1;31mAn error has occurred. Please ensure the input and reference files exist and all of the '
-              'required utilities are installed in your PATH\x1B[0;m', file=sys.stderr)
-        sys.exit(1)
+        error('An error has occurred. Please ensure the input and reference files exist and all of the '
+              'required utilities are installed in your PATH')
 
     except CalledProcessError as e:
         # Print an error message depending on which process failed
         if e.cmd[0] == 'samtools':
             if e.cmd[1] == 'bam2fq':
-                print('\x1B[1;31mThe reads could not be converted from BAM to FASTQ format\x1B[0;m', file=sys.stderr)
+                error('The reads could not be converted from BAM to FASTQ format')
 
             elif e.cmd[1] == 'view':
-                print('\x1B[1;31mThe reads could not be converted from SAM format to BAM format\x1B[0;m',
-                      file=sys.stderr)
+                error('The reads could not be converted from SAM format to BAM format')
 
             elif e.cmd[1] == 'sort':
-                print('\x1B[1;31mThe read file could not be sorted\x1B[0;m', file=sys.stderr)
+                error('The read file could not be sorted')
 
             elif e.cmd[1] == 'index':
-                print('\x1B[1;31mThe sorted reads could not be indexed\x1B[0;m', file=sys.stderr)
+                error('The sorted reads could not be indexed')
 
             elif e.cmd[1] == 'mpileup':
-                print('\x1B[1;31mThe reads could not be processed by mpileup before being called\x1B[0;m', file=sys.stderr)
+                error('The reads could not be processed by mpileup before being called')
 
         elif e.cmd[0] == 'karect':
-            print('\x1B[1;31mThe reads could not be corrected\x1B[0;m', file=sys.stderr)
+            error('The reads could not be corrected')
 
         elif e.cmd[0] == 'bowtie2-build':
-            print('\x1B[1;31mAn index could not be constructed from the reference genome provided\x1B[0;m',
-                  file=sys.stderr)
+            error('An index could not be constructed from the reference genome provided')
 
         elif e.cmd[0] == 'bowtie2':
-            print('\x1B[1;31mThe reads could not be aligned to the reference genome\x1B[0;m', file=sys.stderr)
+            error('The reads could not be aligned to the reference genome')
 
         elif e.cmd[0] == 'bcftools':
             if e.cmd[1] == 'call':
-                print('\x1B[1;31mThe variants could not be called\x1B[0;m', file=sys.stderr)
+                error('The variants could not be called')
 
             elif e.cmd[1] == 'index':
-                print('\x1B[1;31mThe variant index could not be constructed\x1B[0;m', file=sys.stderr)
+                error('The variant index could not be constructed')
 
             elif e.cmd[1] == 'consensus':
-                print('\x1B[1;31mA consensus could not be generated from the variants\x1B[0;m', file=sys.stderr)
-
-        # Exit the script with an error code
-        sys.exit(1)
+                error('A consensus could not be generated from the variants')
 
 
 if __name__ == '__main__':
