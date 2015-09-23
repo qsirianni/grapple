@@ -310,7 +310,7 @@ def main(args):
     try:
         # Check if the user wants the version information
         if args['version']:
-            print('Grapple: Version 0.1.0')
+            print('Grapple: Version 0.2.0')
 
         # Start the pipeline if the user provided a reference genome
         elif args['ref']:
