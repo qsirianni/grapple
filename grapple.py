@@ -11,6 +11,7 @@ from __future__ import print_function
 
 import multiprocessing
 import os.path
+import random
 import re
 import subprocess
 import sys
@@ -45,11 +46,13 @@ def status(message):
     print('\x1B[32m', message, '\x1B[0m', file=sys.stderr)
 
 
-def bam_to_fq(read_file, verbose=False):
+def bam_to_fq(read_file, prefix_id='', verbose=False):
     """
     Convert the input file from BAM to FASTQ using samtools.
 
     read_file - file containing the NGS reads in BAM format
+    prefix_id - prefix of all temp files
+    verbose - verbosity of subprocess
 
     Returns the FASTQ file
     """
@@ -59,7 +62,7 @@ def bam_to_fq(read_file, verbose=False):
         raise ValueError('The read file is not in BAM format')
 
     # Create a temporary output file to place the FASTQ output in
-    ofile = os.path.join(tempfile.gettempdir(), 'bam_to_fq_out.fq')
+    ofile = os.path.join(tempfile.gettempdir(), prefix_id + 'bam_to_fq_out.fq')
 
     status('Converting the input from BAM format to FASTQ format')
 
@@ -77,10 +80,9 @@ def read_correction(read_file, cell_type='haploid', match_type='edit', verbose=F
     Correct the raw reads using Karect.
 
     read_file - file containing the NGS reads in FASTQ format
-    thread_number - number of threads the subprocess can use
-    memory_limit - maximum amount of memory the subprocess can use
     cell_type - type of cell the reads are from
     match_type - correction mode to be used
+    verbose - verbosity of subprocess
 
     Returns the FASTQ corrected file
     """
@@ -123,13 +125,14 @@ def read_correction(read_file, cell_type='haploid', match_type='edit', verbose=F
     return ofile
 
 
-def read_alignment(read_file, ref_genome_file, verbose=False):
+def read_alignment(read_file, ref_genome_file, prefix_id='', verbose=False):
     """
     Align the reads to the reference genome using Bowtie2.
 
     read_file - file containing the NGS reads to align in FASTQ format
     ref_genome_file - file containing the reference genome in FASTA format
-    thread_number - number of threads to use during alignment
+    prefix_id - prefix of all temp files
+    verbose - verbosity of subprocess
 
     Returns the aligned FASTQ read file
     """
@@ -144,8 +147,8 @@ def read_alignment(read_file, ref_genome_file, verbose=False):
     # Get system parameters
     thread_number = multiprocessing.cpu_count()
 
-    index_prefix = os.path.join(tempfile.gettempdir(), 'bt2_index')
-    ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.sam')
+    index_prefix = os.path.join(tempfile.gettempdir(), prefix_id + 'bt2_index')
+    ofile = os.path.join(tempfile.gettempdir(), prefix_id + 'aligned_reads.sam')
 
     status('Aligning the reads')
 
@@ -163,11 +166,13 @@ def read_alignment(read_file, ref_genome_file, verbose=False):
     return ofile
 
 
-def sam_to_bam(read_file, verbose=False):
+def sam_to_bam(read_file, prefix_id='', verbose=False):
     """
     Convert the input file from SAM format to BAM format
 
     read_file - reads in SAM format
+    prefix_id - prefix of all temp files
+    verbose - verbosity of subprocess
 
     Returns the converted BAM read file
     """
@@ -176,7 +181,7 @@ def sam_to_bam(read_file, verbose=False):
     if os.path.splitext(read_file)[1] != '.sam':
         raise ValueError('The read file is not in SAM format')
 
-    ofile = os.path.join(tempfile.gettempdir(), 'aligned_reads.bam')
+    ofile = os.path.join(tempfile.gettempdir(), prefix_id + 'aligned_reads.bam')
 
     status('Converting the aligned reads from SAM format to BAM format')
 
@@ -189,12 +194,13 @@ def sam_to_bam(read_file, verbose=False):
     return ofile
 
 
-def sort_and_index(read_file, verbose=False):
+def sort_and_index(read_file, prefix_id='', verbose=False):
     """
     Sort and index the aligned reads
 
     read_file - aligned reads in SAM format
-    thread_number - number of threads to use for sorting
+    prefix_id - prefix of all temp files
+    verbose - verbosity of subprocess
 
     Returns the sorted and indexed SAM read file
     """
@@ -206,8 +212,8 @@ def sort_and_index(read_file, verbose=False):
     # Get system parameters
     thread_number = multiprocessing.cpu_count()
 
-    temp_prefix = os.path.join(tempfile.gettempdir(), 'samtools_sorting')
-    ofile = os.path.join(tempfile.gettempdir(), 'sorted_reads.bam')
+    temp_prefix = os.path.join(tempfile.gettempdir(), prefix_id + 'samtools_sorting')
+    ofile = os.path.join(tempfile.gettempdir(), prefix_id + 'sorted_reads.bam')
 
     status('Sorting and indexing the reads')
 
@@ -224,12 +230,14 @@ def sort_and_index(read_file, verbose=False):
     return ofile
 
 
-def call_variants(read_file, ref_genome_file, verbose=False):
+def call_variants(read_file, ref_genome_file, prefix_id='', verbose=False):
     """
     Call the variants in the read file using the reference genome
 
     read_file - sorted and indexed reads in BAM format
     ref_genome_file - reference genome in FASTA format
+    prefix_id - prefix of all temp files
+    verbose - verbosity of subprocess
 
     Returns the call variants file in VCF format
     """
@@ -241,9 +249,9 @@ def call_variants(read_file, ref_genome_file, verbose=False):
     if not re.match(r'\.((fa)|(fna)|(fasta))', os.path.splitext(ref_genome_file)[1]):
         raise ValueError('The reference genome file is not in FASTA format')
 
-    pileup = os.path.join(tempfile.gettempdir(), 'pileup.vcf')
-    variants = os.path.join(tempfile.gettempdir(), 'variants.vcf')
-    ofile = os.path.join(tempfile.gettempdir(), 'consensus.fa')
+    pileup = os.path.join(tempfile.gettempdir(), prefix_id + 'pileup.vcf')
+    variants = os.path.join(tempfile.gettempdir(), prefix_id + 'variants.vcf')
+    ofile = os.path.join(tempfile.gettempdir(), prefix_id + 'consensus.fa')
 
     status('Calling the variants')
 
@@ -268,18 +276,19 @@ def call_variants(read_file, ref_genome_file, verbose=False):
     return ofile
 
 
-def format_consensus(consensus_file):
+def format_consensus(consensus_file, prefix_id=''):
     """
     Edit the consenses file to ensure it is formatted correctly
 
     consensus_file - Consensus file to format
+    prefix_id - prefix of all temp files
     """
 
     # Ensure the files are in the appropriate format
     if not re.match(r'\.((fa)|(fna)|(fasta))', os.path.splitext(consensus_file)[1]):
         raise ValueError('The consensus file is not in FASTA format')
 
-    formatted_file = os.path.join(tempfile.gettempdir(), 'formatted_consensus.fa')
+    formatted_file = os.path.join(tempfile.gettempdir(), prefix_id + 'formatted_consensus.fa')
 
     status('Formatting the consensus')
 
@@ -310,6 +319,9 @@ def main(args):
                 raise IOError()
 
             else:
+                # Generate a random identifier to label the temp files with
+                prefix_id = str(random.getrandbits(32)) + '_'
+
                 # Determine if the user has provided an input file or wishes to use stdin
                 if args['input']:
                     # Ensure the file exists
@@ -319,13 +331,13 @@ def main(args):
                         raise IOError()
 
                 else:
-                    ifile = os.path.join(tempfile.gettempdir(), 'stdin_dump.bam')
+                    ifile = os.path.join(tempfile.gettempdir(), prefix_id + 'stdin_dump.bam')
                     with open(ifile, 'wb') as ifile_handle:
                         for line in sys.stdin:
                             ifile_handle.write(line)
 
                 # Convert the input file containing the reads from BAM to FASTQ format
-                raw_reads = bam_to_fq(ifile, args['verbose'])
+                raw_reads = bam_to_fq(ifile, prefix_id, args['verbose'])
 
                 # Correct the reads if error correction has not been disabled
                 if not args['disable_ec']:
@@ -348,19 +360,19 @@ def main(args):
                     corrected_reads = raw_reads
 
                 # Align the reads
-                aligned_reads = read_alignment(corrected_reads, args['ref'], args['verbose'])
+                aligned_reads = read_alignment(corrected_reads, args['ref'], prefix_id, args['verbose'])
 
                 # Convert the aligned reads to BAM format from SAM format
-                converted_aligned_reads = sam_to_bam(aligned_reads, args['verbose'])
+                converted_aligned_reads = sam_to_bam(aligned_reads, prefix_id, args['verbose'])
 
                 # Sort and index the aligned reads
-                sorted_reads = sort_and_index(converted_aligned_reads, args['verbose'])
+                sorted_reads = sort_and_index(converted_aligned_reads, prefix_id, args['verbose'])
 
                 # Call the variants and generate a consensus
-                consensus = call_variants(sorted_reads, args['ref'], args['verbose'])
+                consensus = call_variants(sorted_reads, args['ref'], prefix_id, args['verbose'])
 
                 # Clean up the consensus formatting
-                cleaned_consensus = format_consensus(consensus)
+                cleaned_consensus = format_consensus(consensus, prefix_id)
 
                 # Determine if the user has provided an output file or wishes to use stdout
                 with open(cleaned_consensus) as consensus_handle:

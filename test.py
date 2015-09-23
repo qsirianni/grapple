@@ -27,11 +27,17 @@ class TestError(TestCase):
 class TestBamToFq(TestCase):
     """Tests involving bam_to_fq()"""
 
+    def setUp(self):
+        """Setup code for test cases"""
+
+        # Available test file
+        self._test_file = os.path.join('test_files', 'lambda_iontorrent.bam')
+
     def test_valid_file(self):
         """Should not raise an exception when a valid bam file is used"""
 
         try:
-            grapple.bam_to_fq(os.path.join('test_files', 'lambda_iontorrent.bam'))
+            grapple.bam_to_fq(self._test_file)
 
         except Exception as e:
             self.fail(e.message)
@@ -59,6 +65,18 @@ class TestBamToFq(TestCase):
 
         with self.assertRaises(AttributeError):
             grapple.bam_to_fq(None)
+
+    def test_bad_prefix(self):
+        """Should raise an exception when a type that cannot be converted to a string is used as the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.bam_to_fq(self._test_file, prefix_id=0)
+
+    def test_none_prefix(self):
+        """Should raise an exception when None is used as the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.bam_to_fq(self._test_file, prefix_id=None)
 
 
 class TestReadCorrection(TestCase):
@@ -179,15 +197,33 @@ class TestAlignment(TestCase):
         with self.assertRaises(AttributeError):
             grapple.read_alignment(self._test_file, None)
 
+    def test_bad_prefix(self):
+        """Should raise an exception when a type that cannot be converted to a string is given for the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.read_alignment(self._test_file, self._ref_file, prefix_id=0)
+
+    def test_none_prefix(self):
+        """Should raise an exception when None is used as the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.read_alignment(self._test_file, self._ref_file, prefix_id=None)
+
 
 class TestSamToBam(TestCase):
     """Test cases for sam_to_bam() conversion"""
+
+    def setUp(self):
+        """Setup code for test cases"""
+
+        # Available test files
+        self._test_file = os.path.join('test_files', 'aligned_lambda.sam')
 
     def test_valid_file(self):
         """Should not raise an exception when a valid file is to be converted"""
 
         try:
-            grapple.sam_to_bam(os.path.join('test_files', 'aligned_lambda.sam'))
+            grapple.sam_to_bam(self._test_file)
 
         except Exception as e:
             self.fail(e.message)
@@ -210,15 +246,33 @@ class TestSamToBam(TestCase):
         with self.assertRaises(AttributeError):
             grapple.sam_to_bam(None)
 
+    def test_bad_prefix(self):
+        """Should raise an exception when a type that cannot be converted to a string is given for the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.sam_to_bam(self._test_file, prefix_id=0)
+
+    def test_none_prefix(self):
+        """Should raise an exception when None is used as the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.sam_to_bam(self._test_file, prefix_id=None)
+
 
 class TestSortAndIndex(TestCase):
     """Test cases for sort_and_index()"""
+
+    def setUp(self):
+        """Setup code for test cases"""
+
+        # Available test files
+        self._test_file = os.path.join('test_files', 'aligned_lambda.bam')
 
     def test_valid_file(self):
         """Should not raise an exception when a valid file is provided"""
 
         try:
-            grapple.sort_and_index(os.path.join('test_files', 'aligned_lambda.bam'))
+            grapple.sort_and_index(self._test_file)
 
         except Exception as e:
             self.fail(e.message)
@@ -240,6 +294,18 @@ class TestSortAndIndex(TestCase):
 
         with self.assertRaises(AttributeError):
             grapple.sort_and_index(None)
+
+    def test_bad_prefix(self):
+        """Should raise an exception when a type that cannot be converted to a string is given for the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.sort_and_index(self._test_file, prefix_id=0)
+
+    def test_none_prefix(self):
+        """Should raise an exception when None is used as the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.sort_and_index(self._test_file, prefix_id=None)
 
 
 class TestCallVariants(TestCase):
@@ -299,15 +365,33 @@ class TestCallVariants(TestCase):
         with self.assertRaises(AttributeError):
             grapple.call_variants(self._test_file, None)
 
+    def test_bad_prefix(self):
+        """Should raise an exception when a type that cannot be converted to a string is given for the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.call_variants(self._test_file, self._ref_file, prefix_id=0)
+
+    def test_none_prefix(self):
+        """Should raise an exception when None is used as the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.call_variants(self._test_file, self._ref_file, prefix_id=None)
+
 
 class TestFormatConsensus(TestCase):
     """Test cases for format_consensus()"""
+
+    def setUp(self):
+        """Setup for test cases"""
+
+        # Available test file
+        self._test_file = os.path.join('test_files', 'lambda_consensus.fa')
 
     def test_valid_file(self):
         """Should not raise an exception when supplying valid files"""
 
         try:
-            grapple.format_consensus(os.path.join('test_files', 'lambda_consensus.fa'))
+            grapple.format_consensus(self._test_file)
 
         except Exception as e:
             self.fail(e.message)
@@ -329,6 +413,18 @@ class TestFormatConsensus(TestCase):
 
         with self.assertRaises(AttributeError):
             grapple.format_consensus(None)
+
+    def test_bad_prefix(self):
+        """Should raise an exception when a type that cannot be converted to a string is given for the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.format_consensus(self._test_file, prefix_id=0)
+
+    def test_none_prefix(self):
+        """Should raise an exception when None is used as the prefix"""
+
+        with self.assertRaises(TypeError):
+            grapple.format_consensus(self._test_file, prefix_id=None)
 
 
 if __name__ == '__main__':

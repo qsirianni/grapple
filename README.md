@@ -4,10 +4,9 @@ Grapple
 Genome Reference Assembly Pipeline
 ----------------------------------
 
-Grapple is a small Python script intended to allow users to create consensus genomes from NGS reads on POSIX platforms. Grapple utilizes common bioinformatics tools such as samtools and bowtie2 in order to pipeline the inputted NGS reads into a consensus FASTA file.
-
-Currently, the script is focused on Ion Torrent NGS reads. However, it will have the potential to accept other forms of NGS reads
-once it has been developed further
+Grapple is a small Python script intended to allow users to create consensus genomes from unpaired NGS reads on 
+POSIX platforms. Grapple utilizes common bioinformatics tools such as samtools and bowtie2 in order to pipeline the 
+inputted NGS reads into a consensus FASTA file.
 
 Using Grapple
 -------------
