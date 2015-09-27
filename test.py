@@ -21,7 +21,7 @@ class TestError(TestCase):
         """Should raise an exception to exit the script when called with any message"""
 
         with self.assertRaises(SystemExit):
-            grapple.error('An error has occurred')
+            grapple.error('')
 
 
 class TestBamToFq(TestCase):

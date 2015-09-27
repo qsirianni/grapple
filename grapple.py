@@ -29,7 +29,7 @@ def error(message):
     """
 
     # Print the error message as red text using escape codes
-    print('\x1B[31m', message, '\x1B[0m', file=sys.stderr)
+    print('\x1B[31m', message, '\x1B[0m', sep='', file=sys.stderr)
 
     # Exit the script with an error code
     sys.exit(1)
@@ -43,7 +43,7 @@ def status(message):
     """
 
     # Print the status message as green text using escape codes
-    print('\x1B[32m', message, '\x1B[0m', file=sys.stderr)
+    print('\x1B[32m', message, '\x1B[0m', sep='', file=sys.stderr)
 
 
 def bam_to_fq(read_file, prefix_id='', verbose=False):
@@ -460,10 +460,10 @@ if __name__ == '__main__':
 
     parser.add_argument('-r', '--ref', help='The reference genome used to align the read in FASTA format')
 
+    parser.add_argument('-V', '--version', action='store_true', help='Show the current version of the software.')
+
     parser.add_argument('-v', '--verbose', action='store_true', help='Output more information about each subprocess '
                                                                      'being executed')
-
-    parser.add_argument('-V', '--version', action='store_true', help='Show the current version of the software.')
 
     parser.add_argument('--ploidy', choices=['n', '2n'], default='n', help='Specify the ploidy of the cells from which '
                                                                            'the reads came from. If error correction '
