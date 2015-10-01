@@ -54,7 +54,7 @@ install:
 - "cd ../"
 
 # Install PIP dependencies
-- "pip install psutil"
+- "pip install -r requirements.txt"
 
 # Run the test script
 script: "./test.py"

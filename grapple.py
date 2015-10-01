@@ -28,8 +28,14 @@ def error(message):
     message - the error message to print
     """
 
-    # Print the error message as red text using escape codes
-    print('\x1B[31m', message, '\x1B[0m', sep='', file=sys.stderr)
+    # Ensure the stderr is being fed into a terminal
+    if sys.stderr.isatty():
+        # Print the error message as red text using escape codes
+        print('\x1B[31m', message, '\x1B[0m', sep='', file=sys.stderr)
+
+    else:
+        # Print the message with no formatting
+        print(message, file=sys.stderr)
 
     # Exit the script with an error code
     sys.exit(1)
@@ -42,8 +48,14 @@ def status(message):
     message - the status message to print
     """
 
-    # Print the status message as green text using escape codes
-    print('\x1B[32m', message, '\x1B[0m', sep='', file=sys.stderr)
+    # Ensure the stderr is being fed into a terminal
+    if sys.stderr.isatty():
+        # Print the status message as green text using escape codes
+        print('\x1B[32m', message, '\x1B[0m', sep='', file=sys.stderr)
+
+    else:
+        # Print the message with no formatting
+        print(message, file=sys.stderr)
 
 
 def bam_to_fq(read_file, prefix_id='', verbose=False):
