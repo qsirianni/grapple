@@ -320,12 +320,8 @@ def main(args):
     """Executes the pipeline according to the user's arguments."""
 
     try:
-        # Check if the user wants the version information
-        if args['version']:
-            print('Grapple: Version 0.2.0')
-
         # Start the pipeline if the user provided a reference genome
-        elif args['ref']:
+        if args['ref']:
             # Ensure the reference file exists
             if not os.path.isfile(args['ref']):
                 raise IOError()
@@ -458,7 +454,7 @@ if __name__ == '__main__':
     import argparse
 
     # Setup a parser object for user args
-    parser = argparse.ArgumentParser(description='Genome Reference Assembly Pipeline', add_help=False)
+    parser = argparse.ArgumentParser(prog='grapple', description='Genome Reference Assembly Pipeline', add_help=False)
 
     parser.add_argument('-d', '--disable_ec', action='store_true', help='Disable error correction')
 
@@ -472,7 +468,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-r', '--ref', help='The reference genome used to align the read in FASTA format')
 
-    parser.add_argument('-V', '--version', action='store_true', help='Show the current version of the software.')
+    parser.add_argument('-V', '--version', action='version', version='{} 0.2.1'.format(parser.prog.title()),
+                        help='Show the current version of the software.')
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Output more information about each subprocess '
                                                                      'being executed')
