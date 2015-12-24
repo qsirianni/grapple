@@ -40,7 +40,7 @@ class TestBamToFq(TestCase):
             grapple.bam_to_fq(self._test_file)
 
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_invalid_file(self):
         """Should raise an exception when the wrong type of file is used"""
@@ -95,7 +95,7 @@ class TestReadCorrection(TestCase):
             grapple.read_correction(self._test_file)
 
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_invalid_file(self):
         """Should raise an exception when a file with the wrong format is used"""
@@ -159,7 +159,7 @@ class TestAlignment(TestCase):
             grapple.read_alignment(self._test_file, self._ref_file)
 
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_invalid_read_file(self):
         """Should raise an exception when the read file is formatted wrong"""
@@ -226,7 +226,7 @@ class TestSamToBam(TestCase):
             grapple.sam_to_bam(self._test_file)
 
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_invalid_file(self):
         """Should raise an exception when a file with the wrong format is converted"""
@@ -275,7 +275,7 @@ class TestSortAndIndex(TestCase):
             grapple.sort_and_index(self._test_file)
 
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_invalid_file(self):
         """Should raise an exception when a file with the wrong format is used"""
@@ -327,7 +327,7 @@ class TestCallVariants(TestCase):
             grapple.call_variants(self._test_file, self._ref_file)
 
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_invalid_read_file(self):
         """Should raise an exception when supplying a read file with the wrong format"""
@@ -394,7 +394,7 @@ class TestFormatConsensus(TestCase):
             grapple.format_consensus(self._test_file)
 
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_invalid_file(self):
         """Should raise an exception when the file is not in FASTA format"""

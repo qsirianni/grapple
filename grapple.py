@@ -405,7 +405,7 @@ def main(args):
 
     except ValueError as e:
         # Print the error message before exiting the script
-        error(e.message)
+        error(e)
 
     except EnvironmentError:
         # Inform the user something is wrong with the execution environment
