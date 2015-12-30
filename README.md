@@ -1,5 +1,5 @@
-Grapple
-=======
+Grapple [![Build Status](https://travis-ci.org/qsirianni/grapple.svg)](https://travis-ci.org/qsirianni/grapple)
+===============================================================================================================
 
 Genome Reference Assembly Pipeline
 ----------------------------------
@@ -24,4 +24,10 @@ Grapple also requires the following utilities to be installed and in your PATH:
 * bcftools
 * bowtie2
 
-[![Build Status](https://travis-ci.org/qsirianni/grapple.svg)](https://travis-ci.org/qsirianni/grapple)
+Homebrew Formula
+----------------
+
+If you would like to automate the installation of Grapple, a homebrew formula is available. Simply enter the following commands:
+
+    brew tap qsirianni/bioinformatics
+    brew install grapple
