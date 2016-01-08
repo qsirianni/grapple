@@ -1,10 +1,10 @@
-# Compiled python
+# Compiled python bytecode
 *.pyc
 
-# Setup.py files
+# Setup files
 build/*
 dist/*
 grapple.egg-info/*
 
-# Ignored test files
+# Test files
 *.fai

@@ -27,7 +27,8 @@ Grapple also requires the following utilities to be installed and in your PATH:
 Homebrew Formula
 ----------------
 
-If you would like to automate the installation of Grapple, a homebrew formula is available. Simply enter the following commands:
+If you would like to automate the installation of Grapple, a homebrew formula is available. Simply enter the following 
+commands:
 
     brew tap qsirianni/bioinformatics
     brew install grapple

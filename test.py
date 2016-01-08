@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Contains unit tests for grapple."""
+"""Contains unit tests for Grapple."""
 
 import os.path
 import unittest

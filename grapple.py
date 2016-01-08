@@ -7,6 +7,7 @@ reference assembly in FASTA format.
 
 from __future__ import print_function
 
+import argparse
 import multiprocessing
 import os.path
 import random
@@ -449,8 +450,6 @@ def main(args):
 
 
 if __name__ == '__main__':
-    import argparse
-
     # Setup a parser object for user args
     parser = argparse.ArgumentParser(prog='grapple', description='Genome Reference Assembly Pipeline', add_help=False)
 
