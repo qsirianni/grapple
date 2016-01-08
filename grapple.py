@@ -3,8 +3,6 @@
 """
 Script designed to pipeline a collection of NGS reads through various utilities in order to create a
 reference assembly in FASTA format.
-
-Author: Quinton Sirianni
 """
 
 from __future__ import print_function
@@ -103,11 +101,11 @@ def read_correction(read_file, cell_type='haploid', match_type='edit', verbose=F
     if not re.match(r'\.((fastq)|(fq))', os.path.splitext(read_file)[1]):
         raise ValueError('The read file is not in FASTQ format')
 
-    # Ensure the file exists (karect doesn't return an error code if it doesn't)
+    # Ensure the file exists (karect does not return an error code if it does not exist)
     if not os.path.isfile(read_file):
-        raise ValueError("The read file doesn't exist")
+        raise ValueError('The read file does not exist')
 
-    # Ensure that karect's parameters are valid (karect doesn't return an error code if they are not)
+    # Ensure that karect's parameters are valid (karect does not return an error code if they are not)
     if not re.match(r'(haploid)|(diploid)', cell_type):
         raise ValueError('The cell type is not a valid value')
 
@@ -468,7 +466,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-r', '--ref', help='The reference genome used to align the read in FASTA format')
 
-    parser.add_argument('-V', '--version', action='version', version='{} 0.2.1'.format(parser.prog.title()),
+    parser.add_argument('-V', '--version', action='version', version='Grapple 0.2.3',
                         help='Show the current version of the software.')
 
     parser.add_argument('-v', '--verbose', action='store_true', help='Output more information about each subprocess '

@@ -1,9 +1,16 @@
-from distutils.core import setup
+#!/usr/bin/env python
 
-setup(
-    name='Grapple',
-    version='0.2.2',
-    license='MIT',
-    author='Quinton Sirianni',
-    description='Genome Reference Assembly Pipeline',
-    scripts=['grapple.py'])
+"""Setup script for distribution."""
+
+from setuptools import setup
+
+
+if __name__ == '__main__':
+    setup(
+        name='grapple',
+        description='Genome Reference Assembly Pipeline',
+        author='Quinton Sirianni',
+        version='0.2.3',
+        license='MIT',
+        install_requires=['psutil'],
+        scripts=['grapple.py'])

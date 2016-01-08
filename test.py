@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Contains unit tests for the Grapple script
-
-Author: Quinton Sirianni
-"""
+"""Contains unit tests for grapple."""
 
 import os.path
 import unittest

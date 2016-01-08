@@ -1,8 +1,10 @@
 # Compiled python
 *.pyc
 
-# Setup.py build files
+# Setup.py files
 build/*
+dist/*
+grapple.egg-info/*
 
 # Ignored test files
 *.fai
