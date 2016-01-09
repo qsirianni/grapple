@@ -1,60 +1,19 @@
-sudo: false
+os: osx
 language: python
 python:
+  # Supported python runtime environments
   - "2.7"
+  - "3.5"
 
+# Setup homebrew for dependency installation
+before_install:
+  - "brew tap homebrew/science qsirianni/bioinformatics"
+  - "brew update"
+
+# Install grapple's dependencies using homebrew and pip
 install:
-# Install zlib
-- "wget http://zlib.net/zlib-1.2.8.tar.gz"
-- "tar -xzvf zlib-1.2.8.tar.gz"
-- "cd zlib-1.2.8"
-- "./configure && make"
-- "export PATH=$PWD:$PATH"
-- "cd ../"
-
-# Install HTSlib
-- "wget https://github.com/samtools/htslib/archive/1.2.1.tar.gz"
-- "tar -xzvf 1.2.1.tar.gz"
-- "cd htslib-1.2.1"
-- "make"
-- "export PATH=$PWD:$PATH"
-- "cd ../"
-
-# Install bcftools
-- "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
-- "tar -xzvf 1.2.tar.gz"
-- "cd bcftools-1.2"
-- "make HTSDIR=../htslib-1.2.1"
-- "export PATH=$PWD:$PATH"
-- "cd ../"
-- "rm -rf 1.2.tar.gz"
-
-# Install samtools
-- "wget https://github.com/samtools/samtools/archive/1.2.tar.gz"
-- "tar -xzvf 1.2.tar.gz"
-- "cd samtools-1.2"
-- "make HTSDIR=../htslib-1.2.1"
-- "export PATH=$PWD:$PATH"
-- "cd ../"
-
-# Install bowtie2
-- "wget https://github.com/BenLangmead/bowtie2/archive/v2.2.6.tar.gz"
-- "tar -xzvf v2.2.6.tar.gz"
-- "cd bowtie2-2.2.6"
-- "make"
-- "export PATH=$PWD:$PATH"
-- "cd ../"
-
-# Install karect
-- "wget https://github.com/aminallam/karect/archive/v1.0.tar.gz"
-- "tar -xzvf v1.0.tar.gz"
-- "cd karect-1.0"
-- "make"
-- "export PATH=$PWD:$PATH"
-- "cd ../"
-
-# Install PIP dependencies
-- "pip install -r requirements.txt"
+  - "brew install samtools karect bowtie2 bcftools"
+  - "pip install -r requirements.txt"
 
 # Run the test script
 script: "./test.py"
