@@ -1,67 +1,32 @@
-sudo: false
+sudo: required
 language: python
 python:
   - "2.7"
-  - "3.1"
   - "3.2"
   - "3.3"
   - "3.4"
   - "3.5"
   - "nightly"
-  - "pypy"
-  - "pypy3"
+
+before_install:
+  # Update apt-get
+  - "sudo apt-get update"
 
 install:
-  # Install zlib
-  - "wget http://zlib.net/zlib-1.2.8.tar.gz"
-  - "tar -xzvf zlib-1.2.8.tar.gz"
-  - "cd zlib-1.2.8"
-  - "./configure && make"
-  - "export PATH=$PWD:$PATH"
-  - "cd ../"
+  # Install dependencies for homebrew
+  - "sudo apt-get install build-essential curl git m4 ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev libncurses-dev zlib1g-dev"
 
-  # Install HTSlib
-  - "wget https://github.com/samtools/htslib/archive/1.2.1.tar.gz"
-  - "tar -xzvf 1.2.1.tar.gz"
-  - "cd htslib-1.2.1"
-  - "make"
-  - "export PATH=$PWD:$PATH"
-  - "cd ../"
+  # Install homebrew and update PATH
+  - "git clone https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew"
+  - "export PATH='$HOME/.linuxbrew/bin:$PATH'"
+  - "export MANPATH='$HOME/.linuxbrew/share/man:$MANPATH'"
+  - "export INFOPATH='$HOME/.linuxbrew/share/info:$INFOPATH'"
 
-  # Install bcftools
-  - "wget https://github.com/samtools/bcftools/archive/1.2.tar.gz"
-  - "tar -xzvf 1.2.tar.gz"
-  - "cd bcftools-1.2"
-  - "make HTSDIR=../htslib-1.2.1"
-  - "export PATH=$PWD:$PATH"
-  - "cd ../"
-  - "rm -rf 1.2.tar.gz"
+  # Install dependencies from homebrew
+  - "brew tap homebrew/science qsirianni/bioinformatics"
+  - "brew install samtools karect bowtie2 bcftools"
 
-  # Install samtools
-  - "wget https://github.com/samtools/samtools/archive/1.2.tar.gz"
-  - "tar -xzvf 1.2.tar.gz"
-  - "cd samtools-1.2"
-  - "make HTSDIR=../htslib-1.2.1"
-  - "export PATH=$PWD:$PATH"
-  - "cd ../"
-
-  # Install bowtie2
-  - "wget https://github.com/BenLangmead/bowtie2/archive/v2.2.6.tar.gz"
-  - "tar -xzvf v2.2.6.tar.gz"
-  - "cd bowtie2-2.2.6"
-  - "make"
-  - "export PATH=$PWD:$PATH"
-  - "cd ../"
-
-  # Install karect
-  - "wget https://github.com/aminallam/karect/archive/v1.0.tar.gz"
-  - "tar -xzvf v1.0.tar.gz"
-  - "cd karect-1.0"
-  - "make"
-  - "export PATH=$PWD:$PATH"
-  - "cd ../"
-
-  # Install PIP dependencies
+  # Install dependencies from pip
   - "pip install -r requirements.txt"
 
 # Run the test script
