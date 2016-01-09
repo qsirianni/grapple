@@ -14,7 +14,7 @@ before_install:
 
 install:
   # Install dependencies for homebrew
-  - "sudo apt-get install build-essential curl git m4 ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev libncurses-dev zlib1g-dev"
+  - "sudo apt-get -y install build-essential curl git m4 ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev libncurses-dev zlib1g-dev"
 
   # Install homebrew and update PATH
   - "git clone https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew"
@@ -23,7 +23,8 @@ install:
   - "export INFOPATH=\"$HOME/.linuxbrew/share/info:$INFOPATH\""
 
   # Install dependencies from homebrew
-  - "brew tap homebrew/science qsirianni/bioinformatics"
+  - "brew tap homebrew/science"
+  - "brew tap qsirianni/bioinformatics"
   - "brew install samtools karect bowtie2 bcftools"
 
   # Install dependencies from pip
