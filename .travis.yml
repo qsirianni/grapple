@@ -18,9 +18,9 @@ install:
 
   # Install homebrew and update PATH
   - "git clone https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew"
-  - "export PATH='$HOME/.linuxbrew/bin:$PATH'"
-  - "export MANPATH='$HOME/.linuxbrew/share/man:$MANPATH'"
-  - "export INFOPATH='$HOME/.linuxbrew/share/info:$INFOPATH'"
+  - "export PATH=\"$HOME/.linuxbrew/bin:$PATH\""
+  - "export MANPATH=\"$HOME/.linuxbrew/share/man:$MANPATH\""
+  - "export INFOPATH=\"$HOME/.linuxbrew/share/info:$INFOPATH\""
 
   # Install dependencies from homebrew
   - "brew tap homebrew/science qsirianni/bioinformatics"
