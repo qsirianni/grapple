@@ -11,8 +11,8 @@ into a consensus FASTA file.
 Using Grapple
 -------------
 
-To run Grapple, clone this repository and run the main script *grapple.py* with a Python interpreter
-(python 2.7 and 3.5 have both been successfully used to run the script).
+To run Grapple, clone this repository and run the main script *grapple.py* with a Python runtime
+(the script has been successfully executed on both CPython version 2.7 as well as CPython versions 3.2 and greater).
 You will need to install Grapple's dependencies from PyPI before the script can be used. Try the command:
 
     sudo pip install -r requirements.txt
@@ -21,8 +21,8 @@ Grapple also requires the following utilities to be installed and in your PATH:
 
 * samtools
 * karect
-* bcftools
 * bowtie2
+* bcftools
 
 Homebrew Formula
 ----------------
