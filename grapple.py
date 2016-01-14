@@ -8,7 +8,6 @@ reference assembly in FASTA format.
 from __future__ import print_function
 
 import argparse
-import multiprocessing
 import os.path
 import random
 import re
@@ -114,7 +113,7 @@ def read_correction(read_file, cell_type='haploid', match_type='edit', verbose=F
         raise ValueError('The match type is not a valid value')
 
     # Get system parameters
-    thread_number = multiprocessing.cpu_count()
+    thread_number = psutil.cpu_count()
     memory_limit = psutil.virtual_memory().available / 1000000000
 
     status('Correcting the reads')
@@ -156,7 +155,7 @@ def read_alignment(read_file, ref_genome_file, prefix_id='', verbose=False):
         raise ValueError('The reference genome file is not in FASTA format')
 
     # Get system parameters
-    thread_number = multiprocessing.cpu_count()
+    thread_number = psutil.cpu_count()
 
     index_prefix = os.path.join(tempfile.gettempdir(), prefix_id + 'bt2_index')
     ofile = os.path.join(tempfile.gettempdir(), prefix_id + 'aligned_reads.sam')
@@ -221,7 +220,7 @@ def sort_and_index(read_file, prefix_id='', verbose=False):
         raise ValueError('The read file is not in BAM format')
 
     # Get system parameters
-    thread_number = multiprocessing.cpu_count()
+    thread_number = psutil.cpu_count()
 
     temp_prefix = os.path.join(tempfile.gettempdir(), prefix_id + 'samtools_sorting')
     ofile = os.path.join(tempfile.gettempdir(), prefix_id + 'sorted_reads.bam')

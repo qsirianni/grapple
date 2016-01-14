@@ -7,14 +7,15 @@ python:
   - "3.4"
   - "3.5"
   - "nightly"
+  - "pypy"
 
-before_install:
-  # Update apt-get
-  - "sudo apt-get update"
+# Update apt-get
+before_install: "sudo apt-get update"
 
 install:
-  # Install dependencies for homebrew
-  - "sudo apt-get -y install build-essential curl git m4 ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev libncurses-dev zlib1g-dev"
+  # Install dependencies for Homebrew
+  - "sudo apt-get -y install build-essential curl git m4 ruby texinfo libbz2-dev libcurl4-openssl-dev libexpat-dev
+     libncurses-dev zlib1g-dev"
 
   # Install homebrew and update PATH
   - "git clone https://github.com/Homebrew/linuxbrew.git ~/.linuxbrew"
@@ -22,7 +23,7 @@ install:
   - "export MANPATH=\"$HOME/.linuxbrew/share/man:$MANPATH\""
   - "export INFOPATH=\"$HOME/.linuxbrew/share/info:$INFOPATH\""
 
-  # Install dependencies from homebrew
+  # Install dependencies from Homebrew
   - "brew tap homebrew/science"
   - "brew tap qsirianni/bioinformatics"
   - "brew install samtools karect bowtie2 bcftools"
