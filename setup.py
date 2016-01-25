@@ -2,7 +2,7 @@
 
 """Setup script for distribution."""
 
-from setuptools import setup
+from distutils.core import setup
 
 
 if __name__ == '__main__':
@@ -12,5 +12,4 @@ if __name__ == '__main__':
         author='Quinton Sirianni',
         version='0.2.3',
         license='MIT',
-        install_requires=['psutil'],
         scripts=['grapple.py'])
